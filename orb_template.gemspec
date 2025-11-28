@@ -7,7 +7,7 @@ Gem::Specification.new do |spec|
   spec.version = ORB::VERSION
   spec.authors = ["KUY.io Inc."]
   spec.email = ["dev@kuy.io"]
-  spec.summary = "JSX-inspired template language for Ruby."
+  spec.summary = "The ORB template language for Ruby."
   spec.description = <<~DESC
     ORB brings the declarative power of JSX to Ruby. It allows you to use ViewComponents as HTML elements (e.g., <Button />).
   DESC
@@ -28,7 +28,7 @@ Gem::Specification.new do |spec|
   spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
     ls.readlines("\x0", chomp: true).reject do |f|
       (f == gemspec) ||
-        f.start_with?(*%w[bin/ Gemfile .gitignore .rspec spec/ .rubocop.yml])
+        f.start_with?(*%w[bin/ Gemfile .gitignore .rspec spec/ test/ .rubocop.yml assets/])
     end
   end
   spec.bindir = "exe"
