@@ -2,28 +2,20 @@
 
 require 'temple'
 require 'cgi/util'
-require "active_support/dependencies/autoload"
+
+require_relative "orb/errors"
+require_relative "orb/token"
+require_relative "orb/tokenizer"
+require_relative "orb/tokenizer2"
+require_relative "orb/render_context"
+require_relative "orb/ast"
+require_relative "orb/parser"
+require_relative "orb/document"
+require_relative "orb/template"
+require_relative "orb/temple"
+require_relative "orb/rails_template"
 
 module ORB
-  extend ActiveSupport::Autoload
-
-  autoload :Error, 'orb/errors'
-  autoload :SyntaxError, 'orb/errors'
-  autoload :ParserError, 'orb/errors'
-  autoload :CompilerError, 'orb/errors'
-  autoload :Token
-  autoload :Tokenizer
-  autoload :RenderContext
-  autoload :AST
-  autoload :Parser
-  autoload :Document
-  autoload :Template
-  autoload :Temple
-  autoload :RailsTemplate
-
-  # Next-gen tokenizer built on top of strscan
-  autoload :Tokenizer2
-
   # Configure class caching
   singleton_class.send(:attr_accessor, :cache_classes)
   self.cache_classes = true

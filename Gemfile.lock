@@ -12,6 +12,7 @@ PATH
   remote: .
   specs:
     orb_template (0.1.0)
+      temple (>= 0.10.4)
 
 GEM
   remote: https://rubygems.org/

@@ -2,15 +2,12 @@
 
 module ORB
   module Temple
-    extend ActiveSupport::Autoload
-
-    autoload :Filters
-    autoload :ComponentFilter
-    autoload :AttributesCompiler
-    autoload :Parser
-    autoload :Compiler
-    autoload :Identity
-    autoload :Engine
-    autoload :Generator, 'orb/temple/generators'
+    require_relative "temple/filters"
+    require_relative "temple/attributes_compiler"
+    require_relative "temple/parser"
+    require_relative "temple/compiler"
+    require_relative "temple/identity"
+    require_relative "temple/engine"
+    require_relative "temple/generators"
   end
 end

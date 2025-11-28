@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
-# TODO: This class is a WIP and not used in production code, yet.
-#
+require 'temple/utils'
+require 'temple/mixins/dispatcher'
+require 'temple/mixins/options'
+
+# WIP - Not used in production yet
 # Eventually this class will be used to generate the Ruby code from the AST.
 # It tries to match the behaviour of the rails ERB Template handler as close as possible.
 module ORB
   module Temple
     module Generators
       class Generator
-        include Utils
-        include Mixins::CompiledDispatcher
-        include Mixins::Options
+        include ::Temple::Utils
+        include ::Temple::Mixins::CompiledDispatcher
+        include ::Temple::Mixins::Options
 
         define_options :save_buffer,
           :streaming,

@@ -97,5 +97,5 @@ module ORB
       RailsTemplate.options[:streaming]
     end
   end
-  ActionView::Template.register_template_handler(:orb, RailsTemplate.new)
+  ActionView::Template.register_template_handler(:orb, RailsTemplate.new) if defined?(ActionView)
 end
