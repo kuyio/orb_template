@@ -327,11 +327,11 @@ Namespaces defined in this way will be searched in order of definition when reso
 
 ## Editor support
 
-- `VSCode` through the [ORB VSCode Extension](https://github/kuyio/orb-vscode).
-- `Zed` through the [ORB Zed Extension](https://github/kuyio/orb-zed).
-- `Neovim` through the [ORB Neovim Plugin](https://github/kuyio/orb-neovim).
+- `VSCode` through the [ORB VSCode Extension](https://github.com/kuyio/vscode-orb).
+- `Zed` through the [ORB Zed Extension](https://github.com/kuyio/zed-orb).
+- Others through the [ORB Treesitter Grammer](https://github.com/kuyio/tree-sitter-orb).
 
-Your favorite editor is not listed? Feel free to contribute an extension/plugin for your editor of choice! The ORB tree-sitter grammar can be found [here](https://github.com/kuyio/tree-sitter-orb).
+Your favorite editor is not listed? Feel free to contribute an extension/plugin for your editor of choice!
 
 ## Roadmap
 
