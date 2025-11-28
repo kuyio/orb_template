@@ -3,7 +3,7 @@
 require_relative "lib/orb/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "ORB"
+  spec.name = "orb_template"
   spec.version = ORB::VERSION
   spec.authors = ["KUY.io Inc."]
   spec.email = ["dev@kuy.io"]

@@ -11,7 +11,7 @@ GIT
 PATH
   remote: .
   specs:
-    ORB (0.1.0)
+    orb_template (0.1.0)
 
 GEM
   remote: https://rubygems.org/
@@ -345,7 +345,6 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
-  ORB!
   haml-rails
   importmap-rails (~> 2.0)
   irb
@@ -353,6 +352,7 @@ DEPENDENCIES
   listen
   minitest
   minitest-rails
+  orb_template!
   puma
   rails
   rake (~> 13.0)
