@@ -1,0 +1,127 @@
+
+<Dummy.Section title="Basic HTML">
+  <div class="Card">
+    <div class="Card-Title">Rendering plain old HTML</div>
+    <div class="Card-Section">
+      <p>Here is a paragraph of text</p>
+      <p>Here is another paragraph of text</p>
+    </div>
+  </div>
+</Dummy.Section>
+
+<Dummy.Section title="Comments">
+  <Card title="Rendering a public comment">
+    <!--
+      This multi-line comment
+      is visible to the public
+      <p>And it can contain HTML tags</p>
+    -->
+    <p>Look at the document source: you should see the comment</p>
+  </Card>
+
+  <Card title="Rendering a private comment">
+    {!--
+      This multi-line comment
+      is invisible to the public
+      <p>And it can contain HTML tags</p>
+      {{or expressions}}
+    --}
+    <p>Look at the document source: you should not see the private comment!</p>
+  </Card>
+</Dummy.Section>
+
+<Dummy.Section title="Components">
+  <Card title="Rendering a Card component">
+    <p>Here is a paragraph of text</p>
+  </Card>
+</Dummy.Section>
+
+<Dummy.Section title="Slots">
+  <Card title="Rendering slots">
+    <Card:section>
+      <p>This is the first section of the card</p>
+    </Card:section>
+
+    <Card:section>
+      <p>This is the second section of the card</p>
+    </Card:section>
+
+    <p>
+      This is the default <code>content</code> slot.
+    </p>
+  </Card>
+</Dummy.Section>
+
+<Dummy.Section title="Expressions">
+  <Card title="Printing expressions {{ ... }}">
+    <p>Math is simple, isn't it? For sure, 1 + 1 must be {{1+1}}</p>
+  </Card>
+
+  <Card title="Rendering a view context variable inside a printing expression">
+    <p>{{@message}}</p>
+  </Card>
+
+  <Card title="Printing expressions with a block {{ ... do }}">
+    <div style="background-color: #C9D2DD;">
+      {{ tag.div(class: "Test") do }}
+        <span>I am the content block passed to the <code>tag.div</code> call</span>
+      {{end}}
+    </div>
+  </Card>
+
+  <Card title="Non printing expressions {% ... %}">
+    {% my_name = 'John Smith' %}
+    You'll never guess that my name is {{my_name}}
+  </Card>
+
+  <Card title="Non printing expressions with block {% ... do %}">
+    {% my_name = ['John', 'Smith'].each do |part| %}
+      Am I {{ part }}?
+    {% end %}
+
+    {% tag.div do %}
+      You cannot see me as I am never printed to the output buffer!
+    {% end %}
+  </Card>
+
+  <Card title="End a printing expression block with a non-printing end">
+    {{ tag.div do }}
+      However, you can see me since I am printed to the output buffer!
+    {% end %}
+  </Card>
+</Dummy.Section>
+
+<Dummy.Section title="Blocks">
+  <Card title="Rendering an {#if} block">
+    {#if @show_greeting}
+      <p>This message is only shown when <code>@show_greeting</code> evaluates to <code>true</code></p>
+    {/if}
+  </Card>
+  <Card title="Interative {#for} blocks">
+    <div>
+      {#for number in (1..3)}
+        <span>{{ number }}</span>
+      {/for}
+    </div>
+  </Card>
+</Dummy.Section>
+
+<Dummy.Section title="Directives and Splats">
+  <Card title="Splat attributes">
+    <div **@dynamic_attributes>
+      <p>{{ @dynamic_attributes.inspect }}</p>
+    </div>
+  </Card>
+
+  <Card title=":if Directive">
+    <div :if={true}>
+      <p>This message is only shown when <code>@show_greeting</code> evaluates to <code>true</code></p>
+    </div>
+  </Card>
+
+  <Card title=":for Directive">
+    <div :for={number in (1..3)} id={number}>
+      <span>Counting to: {{ number }}</span>
+    </div>
+  </Card>
+</Dummy.Section>

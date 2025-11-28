@@ -1,0 +1,28 @@
+.Card {
+  background-color: #FFF;
+  border: 1px solid #DDD;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 0 1rem rgba(0, 0, 0, 0.1);
+  width: 48rem;
+  margin: 0 auto;
+}
+
+.Card-Title {
+  font-size: 16px;
+  font-weight: 600;
+  padding: 10px;
+}
+
+.Card-Section {
+  padding: 10px;
+  font-size: 14px;
+
+  p {
+    margin: 0;
+  }
+}
+
+.Card-Section+.Card-Section {
+  border-top: 1px solid #EEE;
+}

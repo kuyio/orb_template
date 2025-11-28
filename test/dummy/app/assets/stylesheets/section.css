@@ -1,0 +1,25 @@
+.Section {
+  border-radius: 1rem;
+  margin: 4rem;
+  padding: 2rem;
+  background-color: #F2F3F4;
+
+  display: flex;
+  align-items: center;
+}
+
+.Section-Title {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #666;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  flex-basis: 25%;
+}
+
+.Section-Content {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  width: 100%;
+}

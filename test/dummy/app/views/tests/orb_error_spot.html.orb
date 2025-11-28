@@ -1,0 +1,6 @@
+<h1>Oh no!</h1>
+This template has a runtime error
+{#if does_not_exist}
+  {% method_that_does_not_exist %}
+{/if}
+Yikes!

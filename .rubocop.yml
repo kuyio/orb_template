@@ -1,0 +1,25 @@
+inherit_gem:
+  kuyio-rubocop:
+    - rubocop-default.yml
+
+
+AllCops:
+  TargetRubyVersion: 3.2
+  Exclude:
+    - vendor/bundle/**/*
+    - 'data/**/*'
+    - 'bin/**/*'
+    - 'db/**/*'
+
+Style/TrailingCommaInArguments:
+  Enabled: false
+
+Style/TrailingCommaInHashLiteral:
+  Enabled: false
+
+Layout/EmptyLines:
+  Exclude:
+    - Gemfile
+
+Lint/AssignmentInCondition:
+  AllowSafeAssignment: true
