@@ -2,7 +2,11 @@
 
 [![Gem Version](https://badge.fury.io/rb/orb_template.svg)](https://badge.fury.io/rb/orb_template)
 
-![ORB Logo](./assets/orb-lang-logo.png)
+
+
+https://github.com/user-attachments/assets/8380b9a8-2063-40f3-a9b6-1b5d623d6f31
+
+
 
 **ORB** is a template language for Ruby with the express goal of providing a first-class DSL for rendering [ViewComponents](https://viewcomponent.org). It is heavily inspired by [React JSX](https://react.dev/learn/writing-markup-with-jsx) and [Surface](https://surace-ui.org).
 
