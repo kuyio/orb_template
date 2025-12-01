@@ -337,6 +337,21 @@ Namespaces defined in this way will be searched in order of definition when reso
 
 Your favorite editor is not listed? Feel free to contribute an extension/plugin for your editor of choice!
 
+### Visual Studio Code
+To enable `Emmet` support for ORB, add this to your `settings.json`:
+```json
+"emmet.includeLanguages": {
+  "ruby-orb": "html",
+}
+```
+
+To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
+```json
+"tailwindCSS.includeLanguages": {
+  "ruby-orb": "html"
+}
+```
+
 ## Roadmap
 
 - [x] **Step 1: Make it work**
