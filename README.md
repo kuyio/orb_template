@@ -2,11 +2,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/orb_template.svg)](https://badge.fury.io/rb/orb_template)
 
-
-
 https://github.com/user-attachments/assets/8380b9a8-2063-40f3-a9b6-1b5d623d6f31
-
-
 
 **ORB** is a template language for Ruby with the express goal of providing a first-class DSL for rendering [ViewComponents](https://viewcomponent.org). It is heavily inspired by [React JSX](https://react.dev/learn/writing-markup-with-jsx) and [Surface](https://surace-ui.org).
 
@@ -78,13 +74,13 @@ then run:
 bundle install
 ```
 
-The gem automatically registers the `ORB` template engine as the renderer for `*.orb` template files through a Railtie.
+The gem automatically registers the `ORB` template engine as the renderer for `*.html.orb` view template files.
 
 ## Motivation
 
-There already exist a plethora of fast, battle-proven template langauges for the Ruby/Rails ecosystem, so why invent another one?
+There already exist a plethora of fast, battle-proven template languages for the Ruby/Rails ecosystem, so why invent another one?
 
-ORB was born out of the frustration that instantiating and rendering view components with existing template engines quickly becomes tedious. This hindered adoption of ViewComponents in our projects, impacted velocity, maintainance and new-developer onboarding. These effects were especially pronounced with highly customizable view components with long argument lists, as well as deeply nested components, and component trees - like a Design System / Component Library.
+ORB was born out of the frustration that instantiating and rendering view components with existing template engines quickly becomes tedious. This hindered adoption of ViewComponents in our projects, impacted velocity, maintenance and new-developer onboarding. These effects were especially pronounced with highly customizable view components with long argument lists, as well as deeply nested components, and component trees - like a Design System / Component Library.
 
 A common solution to making the rendering of view components less verbose is to define component-specific view helpers like so:
 
@@ -106,7 +102,7 @@ module ComponentsHelper
 end
 ```
 
-You can then using these view helpers in your front-end code, wherever a view components needs to be rendered:
+You can then use these view helpers in your front-end code, wherever a view components needs to be rendered:
 
 ```erb
 <%= card(title: "Your friends") do %>
@@ -138,7 +134,7 @@ The `ORB` template language takes another path and allows you to write component
 </Card>
 ```
 
-Your code becomes more focussed, grokable and maintainable. Front-end teams that may already be familiar with JSX or VUE can become productive faster, and can make use of their existing editor tooling for HTML like `Emmet` when writing templates.
+Your code becomes more focused, grokable and maintainable. Front-end teams that may already be familiar with JSX or VUE can become productive faster, and can make use of their existing editor tooling for HTML like `Emmet` when writing templates.
 
 ### Core Values
 
@@ -155,7 +151,7 @@ We believe that any template language should be enjoyable to the user:
 ### Conventions
 
 - Components rendered by the `ORB` engine live under the configured namespace and omit the `Component` suffix from their class names.
-- Templates have a file extension of `.orb`, for example: `my_template.html.orb` for a template named `:my_template` that outputs in `format: :html`.
+- HTML view templates have a file extension of `.*.orb`, for example: `my_template.html.orb` for a template named `:my_template` that outputs in `format: :html`.
 
 ---
 
@@ -174,7 +170,7 @@ This will instruct the `ORB` engine to look for components under the `MyComponen
 
 ### HTML5
 
-Regular HTML tags are fully supported by `ORB`. Just write your HTML tags as you are used to and your are good to go.
+Regular HTML tags are fully supported by `ORB`. Just write your HTML tags as you are used to and you are good to go.
 
 ```html
 <div id="page-banner" class="banner" aria-role="alert">
@@ -184,7 +180,7 @@ Regular HTML tags are fully supported by `ORB`. Just write your HTML tags as you
 
 ### Expressions
 
-`ORB` supports Ruby expressions in the code through double curly-braces (mustachy syntax). The code inside the curly-braces will be evaluated at render time, and the result will be HTML-safe escaped and inserted into the output.:
+`ORB` supports Ruby expressions in the code through double curly-braces (mustache-like syntax). The code inside the curly-braces will be evaluated at render time, and the result will be HTML-safe escaped and inserted into the output.:
 
 ```html
 <div id="page-banner" class="banner" aria-role="alert">
@@ -252,12 +248,12 @@ Since control flow is such a common thing in templates, `ORB` provides special s
 
 ### View Components
 
-In `ORB` templates, you can render your view components as if they were HTML tags. The component class name is mapped to the tag name by omitting the configured namespace and the `Component` suffix.
+In `ORB` templates, you can render ViewComponents as if they were HTML tags. The `Component` suffix on ViewComponents may be omitted to make the markup nicer.
 
 For example, if you have a `Button` view component that may be defined as:
 
 ```ruby
-class MyComponents::Button < ::ViewComponent::Base
+class MyComponents::Button < ViewComponent::Base
   def initialize(url: "#", **options)
     @url = url
     @options = options
@@ -271,11 +267,13 @@ class MyComponents::Button < ::ViewComponent::Base
 end
 ```
 
-you can render the component in an ORB template `button.html.orb` as:
+you can render the component in an ORB template `show.html.orb` as:
 
 ```jsx
 <Button url="/click_me">I am a button</Button>
 ```
+
+Tip: you can also define the markup for a component inline as an `orb_template <<-ORB ... ORB` block to use the `ORB` template language for the component's own view template.
 
 ### ViewComponent Slots
 
@@ -288,6 +286,8 @@ you can render the component in an ORB template `button.html.orb` as:
   </Card:Section>
 </Card>
 ```
+
+Tip: Slot names are case-insensitive, so `<Card:section> ... </Card:section>` also works.
 
 ### Namespaces
 
@@ -317,14 +317,14 @@ Namespaces defined in this way will be searched in order of definition when reso
 
 **Public comments** are sent to the browser, and can be read by users inspecting the page source. ORB considers default HTML comments `<!-- -->` to be public comments.
 
-```heex
+```html
 <!-- I will be sent to the browser -->
 <p>Hello World!</p>
 ```
 
 **Private comments**, unlike public comments, won't be sent to the browser. Use private comments to mark up your ORB template with annotations that you do not wish users to see.
 
-```heex
+```ruby-orb
 {!-- I won't be sent to the browser --}
 <p>Hello World!</p>
 ```
