@@ -32,8 +32,8 @@ https://github.com/user-attachments/assets/8380b9a8-2063-40f3-a9b6-1b5d623d6f31
 <Card title="Your friends">
   <Card:Section title="Birthdays today">
     <List>
-      <List.Item :for="{friend" in @friends}>
-        <link url="{friend_path(friend)}" {{friend.name}} />
+      <List.Item :for={friend in @friends}>
+        <Link url={friend_path(friend)}>{{friend.name}}</Link>
       </List.Item>
     </List>
   </Card:Section>
@@ -123,10 +123,10 @@ The `ORB` template language takes another path and allows you to write component
   <Card:Section title="Birthdays today">
     <List>
       <List.Item>
-        <link url="{member_path(2)}" Carl Schwartz (27) />
+        <Link url={member_path(2)} Carl Schwartz (27) />
       </List.Item>
       <List.Item>
-        <link url="{member_path(3)}" Floralie Brain (38) />
+        <Link url={member_path(3)} Floralie Brain (38) />
       </List.Item>
     </List>
   </Card:Section>
@@ -204,7 +204,7 @@ The `ORB` language allows you to define dynamic attribute values for HTML tags t
 Example:
 
 ```html
-<div id="{dom_id(banner)}" class="{banner.classes}">
+<div id={dom_id(banner)} class={banner.classes}>
   <span class="message">{{banner.message}}</span>
 </div>
 ```
@@ -221,7 +221,7 @@ For example, a `Banner` may be conditionally rendered through an `{#if}` block c
 
 ```html
 {#if banner.urgent?}
-<div id="{dom_id(banner)}" class="{banner.classNames}">
+<div id={dom_id(banner)} class={banner.classNames}>
   <span class="message">{{banner.message}}</span>
 </div>
 {/if}
@@ -230,7 +230,7 @@ For example, a `Banner` may be conditionally rendered through an `{#if}` block c
 Since control flow is such a common thing in templates, `ORB` provides special syntactic sugar for the `{#if}` and `{#for}` blocks through the `:if` and `:for` directives on HTML tags. The above example can thus be rewritten as:
 
 ```html
-<div id="{dom_id(banner)}" class="{banner.classNames}" :if="{banner.urgent?}">
+<div id={dom_id(banner)} class={banner.classNames} :if={banner.urgent?}>
   <span class="message">{{banner.message}}</span>
 </div>
 ```
