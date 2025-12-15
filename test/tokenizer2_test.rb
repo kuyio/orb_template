@@ -198,13 +198,25 @@ class Tokenizer2Test < Minitest::Test
   end
 
   def test_tokenize_tag_with_splat_attribute
-    source = "<div class='test' *attrs/>"
+    source = "<div class='test' **attrs/>"
     tokenizer = ORB::Tokenizer2.new(source)
     tokens = tokenizer.tokenize
 
     assert_equal tokens, [
       ORB::Token.new(:tag_open, "div", line: 1, column: 1, self_closing: true,
-        attributes: [["class", :string, "test"], [nil, :splat, "*attrs"]]
+        attributes: [["class", :string, "test"], [nil, :splat, "**attrs"]]
+      )
+    ]
+  end
+
+  def test_tokenize_tag_with_splat_expression
+    source = "<div **{on_click(:increment, amount: 10)}/>"
+    tokenizer = ORB::Tokenizer2.new(source)
+    tokens = tokenizer.tokenize
+
+    assert_equal tokens, [
+      ORB::Token.new(:tag_open, "div", line: 1, column: 1, self_closing: true,
+        attributes: [[nil, :splat, "**on_click(:increment, amount: 10)"]]
       )
     ]
   end

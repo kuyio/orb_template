@@ -113,6 +113,13 @@
     </div>
   </Card>
 
+  <Card title="Splat attribute expressions">
+    <button **{on_click(:increment, :prevent, :stop, amount: 10)}>
+      Click me
+    </button>
+    <p>{{ on_click(:increment, amount: 10).inspect }}</p>
+  </Card>
+
   <Card title=":if Directive">
     <div :if={true}>
       <p>This message is only shown when <code>@show_greeting</code> evaluates to <code>true</code></p>

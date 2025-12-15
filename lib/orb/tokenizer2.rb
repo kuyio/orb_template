@@ -139,6 +139,7 @@ module ORB
     end
 
     # Read next token in :tag_open_content state
+    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def next_in_tag_open_content
       if @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK)
         move_by_matched
@@ -163,7 +164,13 @@ module ORB
         transition_to(:initial)
       elsif @source.scan(START_TAG_START)
         syntax_error!("Unexpected start of tag")
-      elsif @source.scan(%r{\*[^\s>/=]+})
+      elsif @source.scan(Patterns::SPLAT_EXPRESSION_START)
+        @attributes << [nil, :splat, nil]
+        clear_braces
+        clear_buffer
+        move_by_matched
+        transition_to(:splat_attribute_expression)
+      elsif @source.scan(Patterns::SPLAT_ATTRIBUTE)
         splat = @source.matched
         @attributes << [nil, :splat, splat]
         move_by_matched
@@ -173,6 +180,7 @@ module ORB
         syntax_error!("Unexpected '#{@source.peek(1)}'")
       end
     end
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     # Read next token in :attribute_name state
     def next_in_attribute_name
@@ -272,6 +280,32 @@ module ORB
         move_by_matched
       else
         syntax_error!("Unexpected end of input while reading expression attribute value")
+      end
+    end
+
+    # Read next token in :splat_attribute_expression state
+    def next_in_splat_attribute_expression
+      if @source.scan(BRACE_OPEN)
+        @braces << "{"
+        buffer_matched
+        move_by_matched
+      elsif @source.scan(BRACE_CLOSE)
+        if @braces.any?
+          @braces.pop
+          buffer_matched
+          move_by_matched
+        else
+          splat_expression = consume_buffer
+          current_attribute[2] = "**#{splat_expression.strip}"
+          move_by_matched
+          clear_braces
+          transition_to(:tag_open_content)
+        end
+      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+        buffer_matched
+        move_by_matched
+      else
+        syntax_error!("Unexpected end of input while reading splat attribute value")
       end
     end
 

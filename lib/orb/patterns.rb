@@ -28,7 +28,8 @@ module ORB
     ATTRIBUTE_ASSIGN              = /=/
     SINGLE_QUOTE                  = /'/
     DOUBLE_QUOTE                  = /"/
-    SPLAT_START                   = /\*/
+    SPLAT_ATTRIBUTE               = %r{\*[^\s>/=]+}
+    SPLAT_EXPRESSION_START        = /\*\*\{/
     BRACE_OPEN                    = /\{/
     BRACE_CLOSE                   = /\}/
     CR                            = /\r/

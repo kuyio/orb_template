@@ -32,8 +32,8 @@ https://github.com/user-attachments/assets/8380b9a8-2063-40f3-a9b6-1b5d623d6f31
 <Card title="Your friends">
   <Card:Section title="Birthdays today">
     <List>
-      <List.Item :for={friend in @friends}>
-        <Link url={friend_path(friend)}>{{friend.name}}</Link>
+      <List.Item :for="{friend" in @friends}>
+        <link url="{friend_path(friend)}" {{friend.name}} />
       </List.Item>
     </List>
   </Card:Section>
@@ -58,7 +58,6 @@ https://github.com/user-attachments/assets/8380b9a8-2063-40f3-a9b6-1b5d623d6f31
   - [Comments](#comments)
 - [Editor Support](#editor-support)
 - [Roadmap](#roadmap)
-
 
 ## Installation
 
@@ -124,10 +123,10 @@ The `ORB` template language takes another path and allows you to write component
   <Card:Section title="Birthdays today">
     <List>
       <List.Item>
-        <Link url={member_path(2)}>Carl Schwartz (27)</Link>
+        <link url="{member_path(2)}" Carl Schwartz (27) />
       </List.Item>
       <List.Item>
-        <Link url={member_path(3)}>Floralie Brain (38)</Link>
+        <link url="{member_path(3)}" Floralie Brain (38) />
       </List.Item>
     </List>
   </Card:Section>
@@ -147,7 +146,6 @@ We believe that any template language should be enjoyable to the user:
 - Dynamic: Rendering with a context of local variables and objects is fast.
 - Polite: guide the user with useful error messages when their templates contain problems.
 
-
 ### Conventions
 
 - Components rendered by the `ORB` engine live under the configured namespace and omit the `Component` suffix from their class names.
@@ -160,6 +158,7 @@ We believe that any template language should be enjoyable to the user:
 ORB fully supports the HTML5 markup language standard and extends HTML with additional syntax for expressions, dynamic attributes, blocks, components, slots, and comments.
 
 ### Configuration
+
 You can configure the `ORB` engine in your Rails application with an initializer, e.g., `config/initializers/orb.rb`:
 
 ```ruby
@@ -205,7 +204,7 @@ The `ORB` language allows you to define dynamic attribute values for HTML tags t
 Example:
 
 ```html
-<div id={dom_id(banner)} class={banner.classes}>
+<div id="{dom_id(banner)}" class="{banner.classes}">
   <span class="message">{{banner.message}}</span>
 </div>
 ```
@@ -222,29 +221,35 @@ For example, a `Banner` may be conditionally rendered through an `{#if}` block c
 
 ```html
 {#if banner.urgent?}
-  <div id="{dom_id(banner)}" class="{banner.classNames}">
-    <span class="message">{{banner.message}}</span>
-  </div>
+<div id="{dom_id(banner)}" class="{banner.classNames}">
+  <span class="message">{{banner.message}}</span>
+</div>
 {/if}
 ```
 
 Since control flow is such a common thing in templates, `ORB` provides special syntactic sugar for the `{#if}` and `{#for}` blocks through the `:if` and `:for` directives on HTML tags. The above example can thus be rewritten as:
 
 ```html
-<div id="{dom_id(banner)}" class="{banner.classNames}" :if={banner.urgent?}>
+<div id="{dom_id(banner)}" class="{banner.classNames}" :if="{banner.urgent?}">
   <span class="message">{{banner.message}}</span>
 </div>
 ```
 
 ### Splatted Attributes
-`ORB` supports attribute splatting for both HTML tags and view components through the `**attributes` syntax. The expression provided for the splat must evaluate to a `Hash`, whose key-value pairs will be added as attributes to the tag. For example:
+
+`ORB` supports attribute splatting for both HTML tags and view components through the `**attributes` syntax. The attribute name for the splat must be a `Hash`; all key-value pairs will be added as attributes to the tag. For example:
 
 ```html
-<div **banner_attributes>
-  ... content ...
-</div>
+<div **banner_attributes>... content ...</div>
 ```
 
+### Splatted Attribute Expressions
+
+You can also use an expression to define the splatted attributes through the `**{expression}` syntax. The expression must evaluate to a `Hash`, and all key-value pairs will be added as attributes to the tag. For example:
+
+```html
+<div **{dynamic_attributes}>... content ...</div>
+```
 
 ### View Components
 
@@ -338,7 +343,9 @@ Namespaces defined in this way will be searched in order of definition when reso
 Your favorite editor is not listed? Feel free to contribute an extension/plugin for your editor of choice!
 
 ### Visual Studio Code
+
 To enable `Emmet` support for ORB, add this to your `settings.json`:
+
 ```json
 "emmet.includeLanguages": {
   "ruby-orb": "html",
@@ -346,6 +353,7 @@ To enable `Emmet` support for ORB, add this to your `settings.json`:
 ```
 
 To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
+
 ```json
 "tailwindCSS.includeLanguages": {
   "ruby-orb": "html"
@@ -376,6 +384,7 @@ To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
 - [ ] **Step 2: Make it nice**
   - [x] improved errors with super helpful error messages and locations throughout the entire stack, possibly custom rendered error pages
   - [x] `**attribute` splats for html tags, components and slots
+  - [x] `**{expression}` splats for html tags, components and slots
   - [x] `:if` directive
   - [x] `:for` directive
   - [x] verbatim tags
@@ -406,12 +415,12 @@ To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
   - [ ] support additional block constructs
   - [ ] support additional language constructs
 
-
 > This library is in beta stage and demonstrates the technical aspects of a custom DSL for rendering ViewComponent objects in an HTML-like manner. It is meant as a kick-off point for further discussion on the definition and implementation of the template language. It may contain critical bugs that could compromise the security and integrity of your application. Additionally, the API and DSL are likely to change as the library evolves to a stable state. Don't say we didn't warn you!
 
 ## Development
 
 To set up your development environment, follow these steps:
+
 1. Clone the repository:
 
    ```bash
@@ -429,19 +438,17 @@ To set up your development environment, follow these steps:
 
    ```bash
    make test
-    ```
+   ```
 
 4. Start the development server for the test application:
 
-    ```bash
-    bin/rails server
-    ```
-
+   ```bash
+   bin/rails server
+   ```
 
 ## Contributing
 
 This project is intended to be a safe, welcoming space for collaboration. Contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct. We recommend reading the [contributing guide](./docs/CONTRIBUTING.md) as well.
-
 
 ## License
 
