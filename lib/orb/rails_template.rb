@@ -39,7 +39,32 @@ module ORB
       end
 
       # Pipe through the ORB Temple engine
-      ORB::Temple::Engine.new(options).call(source)
+      code = ORB::Temple::Engine.new(options).call(source)
+
+      # Validate generated code with Prism to catch syntax errors BEFORE Rails does.
+      # This is a workaround for a Rails 8.1.1 bug where SyntaxErrorProxy fails
+      # is_a?(Exception) checks in ActiveSupport::ErrorReporter#report.
+      # See: rails-syntax-error-bug.md for details.
+      #
+      # Only run in development mode to avoid performance impact in production.
+      # In production, syntax errors will still be caught but with less friendly display.
+      if defined?(Prism) && defined?(Rails) && Rails.env.local?
+        result = Prism.parse(code)
+        if result.failure?
+          first_error = result.errors.first
+          error_line = first_error.location.start_line
+          message = first_error.message
+
+          # Return code that raises the error when executed.
+          # This way Rails' normal error handling will kick in, providing proper
+          # extracted source display and backtrace. We add newlines to position
+          # the error at the correct line number in the template.
+          escaped_message = message.gsub('\\', '\\\\\\\\').gsub("'", "\\\\'")
+          return "#{'\\n' * (error_line - 1)}raise ORB::CompilerError.new('#{escaped_message}', #{error_line})"
+        end
+      end
+
+      code
     end
 
     # See https://github.com/rails/rails/pull/47005
