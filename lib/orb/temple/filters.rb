@@ -118,14 +118,21 @@ module ORB
       # Handle a dynamic node expression `[:orb, :dynamic, node, content]`
       #
       def on_orb_dynamic(node, content)
-        # TODO: Determine whether the node is an html_tag, component, or slot node
-        tmp = unique_name
-        splats = @attributes_compiler.compile_splat_attributes(node.splat_attributes)
-        code = "content_tag('#{node.tag}', #{splats}) do"
+        # Determine whether the node is an html_tag, component, or slot node
+        if node.component_tag?
+          on_orb_component(node, content)
+        elsif node.component_slot_tag?
+          on_orb_slot(node, content)
+        else
+          # It's a dynamic HTML tag
+          tmp = unique_name
+          splats = @attributes_compiler.compile_splat_attributes(node.splat_attributes)
+          code = "content_tag('#{node.tag}', #{splats}) do"
 
-        [:multi,
-          [:block, "#{tmp} = #{code}", compile(content)],
-          [:escape, true, [:dynamic, tmp]]]
+          [:multi,
+            [:block, "#{tmp} = #{code}", compile(content)],
+            [:escape, true, [:dynamic, tmp]]]
+        end
       end
     end
   end

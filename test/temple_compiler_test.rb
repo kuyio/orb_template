@@ -128,6 +128,56 @@ class TempleCompilerTest < Minitest::Test
 
   # TODO: Test compiling a component tag node into a Temple expression
 
+  # When calling the compiler with a component tag with splat attributes,
+  # the resulting temple expression should be a multi node with an [:orb, :dynamic]
+  # node (dynamic tags have splat attributes). The filter will then determine
+  # if it's a component or HTML tag based on the node properties.
+  def test_compile_component_with_splat_attributes
+    input = "<Card **attrs>Hello</Card>"
+
+    parser = ORB::Temple::Parser.new
+    ast = parser.call(input)
+    compiler = ORB::Temple::Compiler.new
+    temple = compiler.call(ast)
+
+    # The first child should be [:orb, :dynamic, node, content]
+    # because the tag has splat attributes making it dynamic
+    assert_equal temple[0], :multi
+    assert_equal temple[1][0], :orb
+    assert_equal temple[1][1], :dynamic
+
+    # Verify the node itself is a component tag
+    node = temple[1][2]
+    assert node.component_tag?, "Expected a component tag node"
+    assert_equal node.tag, "Card"
+    assert_equal node.splat_attributes.length, 1
+  end
+
+  # Test compiling a component with both static and splat attributes
+  def test_compile_component_with_mixed_attributes
+    input = '<Card title="Static Title" **extra_attrs>Hello</Card>'
+
+    parser = ORB::Temple::Parser.new
+    ast = parser.call(input)
+    compiler = ORB::Temple::Compiler.new
+    temple = compiler.call(ast)
+
+    # Should be dynamic due to splat attributes
+    assert_equal temple[1][1], :dynamic
+
+    # Verify the node has both static and splat attributes
+    node = temple[1][2]
+    assert node.component_tag?, "Expected a component tag node"
+    # title + splat
+    assert_equal node.attributes.length, 2
+    assert_equal node.splat_attributes.length, 1
+
+    # Verify static attribute
+    title_attr = node.attributes.find { |a| a.name == "title" }
+    assert title_attr, "Expected to find title attribute"
+    assert_equal title_attr.value, "Static Title"
+  end
+
   # TODO: Test compiling a component slot tag node into a Temple expression
 
   # Compile a :str attribute to a Temple [:html, :attr] expression

@@ -120,6 +120,11 @@
     <p>{{ on_click(:increment, amount: 10).inspect }}</p>
   </Card>
 
+  {% card_attributes = {title: "Splat Attributes"} %}
+  <Card **card_attributes>
+    <p>This card has its attributes passed in as a hash</p>
+  </Card>
+
   <Card title=":if Directive">
     <div :if={true}>
       <p>This message is only shown when <code>@show_greeting</code> evaluates to <code>true</code></p>

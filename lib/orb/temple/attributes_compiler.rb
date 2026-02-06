@@ -37,15 +37,24 @@ module ORB
       # compiled captures are available in the same scope.
       def compile_komponent_args(attributes, prefix)
         args = {}
-        attributes.each do |attribute|
-          # TODO: handle splat attributes
-          next if attribute.splat?
+        splats = []
 
-          var_name = prefixed_variable_name(attribute.name, prefix)
-          args = args.deep_merge(dash_to_hash(attribute.name, var_name))
+        attributes.each do |attribute|
+          if attribute.splat?
+            # Splat attribute values already include the ** prefix
+            splats << attribute.value
+          else
+            var_name = prefixed_variable_name(attribute.name, prefix)
+            args = args.deep_merge(dash_to_hash(attribute.name, var_name))
+          end
         end
 
-        hash_to_args_list(args)
+        # Build the argument list
+        result_parts = []
+        result_parts << hash_to_args_list(args) unless args.empty?
+        result_parts += splats
+
+        result_parts.join(', ')
       end
 
       # Compile the attributes of a node into a Temple core abstraction

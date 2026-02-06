@@ -11,7 +11,7 @@ GIT
 PATH
   remote: .
   specs:
-    orb_template (0.1.1)
+    orb_template (0.1.2)
       temple (>= 0.10.4)
 
 GEM
