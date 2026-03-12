@@ -18,6 +18,9 @@ module ORB
     # Tags that should be ignored
     IGNORED_BODY_TAGS = %w[script style].freeze
 
+    # Maximum allowed brace nesting depth to prevent memory exhaustion
+    MAX_BRACE_DEPTH = 100
+
     # Tags that are self-closing by HTML5 spec
     VOID_ELEMENTS     = %w[area base br col command embed hr img input keygen link meta param source track wbr].freeze
 
@@ -260,7 +263,7 @@ module ORB
     # Read next token in :attribute_value_expression state
     def next_in_attribute_value_expression
       if @source.scan(BRACE_OPEN)
-        @braces << "{"
+        push_brace
         buffer_matched
         move_by_matched
       elsif @source.scan(BRACE_CLOSE)
@@ -286,7 +289,7 @@ module ORB
     # Read next token in :splat_attribute_expression state
     def next_in_splat_attribute_expression
       if @source.scan(BRACE_OPEN)
-        @braces << "{"
+        push_brace
         buffer_matched
         move_by_matched
       elsif @source.scan(BRACE_CLOSE)
@@ -385,7 +388,7 @@ module ORB
     # Read block expression until closing brace
     def next_in_block_open_content
       if @source.scan(BRACE_OPEN)
-        @braces << "{"
+        push_brace
         buffer_matched
         move_by_matched
       elsif @source.scan(BRACE_CLOSE)
@@ -437,7 +440,7 @@ module ORB
         move_by_matched
         transition_to(:initial)
       elsif @source.scan(BRACE_OPEN)
-        @braces << "{"
+        push_brace
         buffer_matched
         move_by_matched
       elsif @source.scan(BRACE_CLOSE)
@@ -462,7 +465,7 @@ module ORB
         move_by_matched
         transition_to(:initial)
       elsif @source.scan(BRACE_OPEN)
-        @braces << "{"
+        push_brace
         buffer_matched
         move_by_matched
       elsif @source.scan(BRACE_CLOSE)
@@ -535,6 +538,13 @@ module ORB
 
     def clear_braces
       @braces = []
+    end
+
+    def push_brace
+      if @braces.length >= MAX_BRACE_DEPTH
+        raise ORB::SyntaxError.new("Maximum brace nesting depth (#{MAX_BRACE_DEPTH}) exceeded", @line)
+      end
+      @braces << "{"
     end
 
     # Moves the cursor

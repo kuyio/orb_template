@@ -404,6 +404,23 @@ The brace-tracking mechanism (`@braces` array) has no depth limit. A malicious t
 
 **Recommendation:** Enforce a maximum nesting depth (e.g., 100 levels) and raise a `SyntaxError` when exceeded.
 
+**Mitigation (applied):** In `lib/orb/tokenizer2.rb`, a `MAX_BRACE_DEPTH` constant (100) is declared and enforced via a `push_brace` helper that replaces all direct `@braces << "{"` calls:
+
+```ruby
+MAX_BRACE_DEPTH = 100
+
+def push_brace
+  if @braces.length >= MAX_BRACE_DEPTH
+    raise ORB::SyntaxError.new("Maximum brace nesting depth (#{MAX_BRACE_DEPTH}) exceeded", @line)
+  end
+  @braces << "{"
+end
+```
+
+All 5 brace-push sites in the tokenizer (`next_in_attribute_value_expression`, `next_in_splat_attribute_expression`, `next_in_block_open_content`, `next_in_printing_expression`, `next_in_control_expression`) now call `push_brace` instead of pushing directly. Moderate nesting (e.g., nested hashes) works fine; only pathological depths are rejected.
+
+**Evidence:** `test_deeply_nested_braces_in_expression_raises_error` and `test_deeply_nested_braces_in_attribute_raises_error` now pass. `test_moderate_brace_nesting_works` remains green. Full test suite (86 non-security runs) shows no regressions.
+
 ---
 
 ### MEDIUM-2: OpenStruct-based RenderContext Exposes Introspection
@@ -620,7 +637,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 | **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated |
-| **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | FAILING (2) |
+| **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | PASSING (2) -- mitigated |
 | **MEDIUM-3** (runtime_error breakout) | `test_runtime_error_with_bracket_produces_valid_ruby`, `test_runtime_error_code_injection_is_rejected` | FAILING (2) |
 | **MEDIUM-4** (attribute name injection) | `test_attribute_name_with_single_quote_is_rejected`, `test_attribute_name_with_backtick_is_rejected` | FAILING (2) |
 | **LOW-1** (verbatim bypass) | `test_verbatim_mode_does_not_process_expressions`, `test_verbatim_mode_passes_html_through_raw` | PASSING (2) |
@@ -630,7 +647,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 
 Baseline tests (expected to always pass): `test_printing_expression_is_escaped_baseline`, `test_static_attribute_value_needs_no_runtime_escape`, `test_with_directive_normal_usage_compiles_correctly`, `test_dynamic_tag_normal_usage_compiles_correctly`, `test_component_name_dotted_namespace_compiles_correctly`, `test_slot_normal_usage_compiles_correctly`, `test_moderate_brace_nesting_works`, `test_runtime_error_normal_message_compiles_correctly`, `test_valid_attribute_names_compile_correctly`, `test_normal_sized_template_works`, `test_for_block_normal_usage_compiles_correctly`, `test_for_directive_normal_usage_compiles_correctly`.
 
-**Totals: 37 tests, 7 failing, 30 passing (13 mitigated).**
+**Totals: 37 tests, 5 failing, 32 passing (15 mitigated).**
 
 When mitigations are applied, each finding's failing tests should turn green while all baseline tests remain passing.
 
