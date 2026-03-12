@@ -132,7 +132,33 @@ The `enumerator` side is also injectable:
 
 **Impact:** Arbitrary code execution via crafted template source.
 
-**Recommendation:** Parse and validate the `:for` expression with a strict regex that only allows `variable_name in expression` patterns, where `variable_name` must be a valid Ruby identifier.
+**Recommendation:** Parse and validate the `:for` expression with a strict regex that only allows `variable_name in expression` patterns, where `variable_name` must be a valid Ruby identifier. Additionally, reject semicolons in the collection expression to prevent statement injection.
+
+**Mitigation (applied):** In `lib/orb/temple/filters.rb:109-121`, the `on_orb_for` method now uses a strict regex to parse the `:for` expression and rejects semicolons in the collection:
+
+```ruby
+# Before
+def on_orb_for(expression, content)
+  enumerator, collection = expression.split(' in ')
+  code = "#{collection}.each do |#{enumerator}|"
+
+# After
+def on_orb_for(expression, content)
+  match = expression.match(/\A\s*([a-z_]\w*)\s+in\s+(.+)\z/m)
+  raise ORB::SyntaxError.new("Invalid :for expression: enumerator must be a valid Ruby identifier", 0) unless match
+
+  enumerator, collection = match[1], match[2]
+
+  if collection.include?(';')
+    raise ORB::SyntaxError.new("Invalid :for collection expression: semicolons are not allowed", 0)
+  end
+
+  code = "#{collection}.each do |#{enumerator}|"
+```
+
+The enumerator is now validated as a Ruby identifier (`[a-z_]\w*`), preventing pipe-delimiter injection. The collection is checked for semicolons, preventing statement injection. Both attack vectors now raise `ORB::SyntaxError` at compile time. Normal `:for` usage (`{#for item in items}`) is unaffected.
+
+**Evidence:** All 4 CRITICAL-1 tests now pass. Full test suite (123 runs) shows 14 expected failures for unmitigated findings, 0 errors, 0 regressions.
 
 ---
 
@@ -526,8 +552,8 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 
 | Finding | Test(s) | Status |
 |---------|---------|--------|
-| **CRITICAL-1** (:for injection) | `test_for_collection_injection_is_rejected`, `test_for_collection_injection_absent_from_temple_ir`, `test_for_enumerator_injection_is_rejected`, `test_for_directive_attribute_injection_is_rejected` | FAILING (4) |
-| **HIGH-1** (attribute XSS) | `test_dynamic_attribute_value_is_escaped` | FAILING (1) |
+| **CRITICAL-1** (:for injection) | `test_for_collection_injection_is_rejected`, `test_for_collection_injection_absent_from_temple_ir`, `test_for_enumerator_injection_is_rejected`, `test_for_directive_attribute_injection_is_rejected` | PASSING (4) -- mitigated |
+| **HIGH-1** (attribute XSS) | `test_dynamic_attribute_value_is_escaped` | PASSING (1) -- mitigated |
 | **HIGH-2** (:with injection) | `test_with_directive_component_injection_is_rejected`, `test_with_directive_slot_injection_is_rejected` | FAILING (2) |
 | **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | FAILING (2) |
 | **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected` | FAILING (1) |
@@ -542,7 +568,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 
 Baseline tests (expected to always pass): `test_printing_expression_is_escaped_baseline`, `test_static_attribute_value_needs_no_runtime_escape`, `test_with_directive_normal_usage_compiles_correctly`, `test_dynamic_tag_normal_usage_compiles_correctly`, `test_component_name_dotted_namespace_compiles_correctly`, `test_slot_normal_usage_compiles_correctly`, `test_moderate_brace_nesting_works`, `test_runtime_error_normal_message_compiles_correctly`, `test_valid_attribute_names_compile_correctly`, `test_normal_sized_template_works`, `test_for_block_normal_usage_compiles_correctly`, `test_for_directive_normal_usage_compiles_correctly`.
 
-**Totals: 37 tests, 19 failing, 18 passing.**
+**Totals: 37 tests, 14 failing, 23 passing (5 mitigated).**
 
 When mitigations are applied, each finding's failing tests should turn green while all baseline tests remain passing.
 
