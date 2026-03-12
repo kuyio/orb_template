@@ -16,3 +16,4 @@ test/dummy/tmp
 
 # Vendored gems
 vendor/bundle
+/.DS_Store

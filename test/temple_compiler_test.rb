@@ -204,7 +204,7 @@ class TempleCompilerTest < Minitest::Test
     compiler = ::ORB::Temple::AttributesCompiler.new
     temple = compiler.compile_attribute(attribute)
 
-    assert_equal temple, [:html, :attr, "sum", [:dynamic, "1 + 1"]]
+    assert_equal temple, [:html, :attr, "sum", [:escape, true, [:dynamic, "1 + 1"]]]
   end
 
   # Test compiling a list of attributes into a Temple [:html, :attrs] expression
@@ -220,7 +220,7 @@ class TempleCompilerTest < Minitest::Test
     assert_equal temple, [:html, :attrs,
       [:html, :attr, "class", [:static, "foo"]],
       [:html, :attr, "disabled", [:dynamic, "nil"]],
-      [:html, :attr, "sum", [:dynamic, "1 + 1"]]]
+      [:html, :attr, "sum", [:escape, true, [:dynamic, "1 + 1"]]]]
   end
 
   # Test compiling a list of attributes into a list of captures
