@@ -4,7 +4,7 @@ module ORB
   module Patterns
     SPACE_CHARS                   = /\s/
     TAG_NAME                      = %r{[^\s>/=$]+}
-    ATTRIBUTE_NAME                = %r{[^\s>/=]+}
+    ATTRIBUTE_NAME                = %r{[a-zA-Z_:][-a-zA-Z0-9_:.]*}
     UNQUOTED_VALUE_INVALID_CHARS  = /["'=<`]/
     UNQUOTED_VALUE                = %r{[^\s/>]+}
     BLOCK_NAME_CHARS              = /[^\s}]+/
