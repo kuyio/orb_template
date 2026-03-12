@@ -351,7 +351,8 @@ class SecurityTest < Minitest::Test
   end
 
   # A crafted error message must not inject executable code between the
-  # raise statements.
+  # raise statements. The generated code should be a single valid Ruby
+  # statement (a raise call) with the attack string safely inside a string literal.
   def test_runtime_error_code_injection_is_rejected
     compiler = ORB::Temple::Compiler.new
 
@@ -364,10 +365,23 @@ class SecurityTest < Minitest::Test
     code_nodes = extract_code_nodes(temple)
     code_strings = code_nodes.map { |n| n[1] }
 
-    injected = code_strings.find { |s| s.include?("system(:pwned)") }
-    refute injected,
-      "Crafted error message must not inject code via %q[] breakout.\n" \
-      "Generated code: #{code_strings.inspect}"
+    # The generated code must be valid Ruby
+    code_strings.each do |code|
+      result = Prism.parse(code)
+      assert result.success?,
+        "runtime_error generated invalid Ruby from crafted message.\n" \
+        "Generated code: #{code}\n" \
+        "Parse errors: #{result.errors.map(&:message).join('; ')}"
+    end
+
+    # The generated code must contain exactly one statement (a raise call),
+    # not multiple statements separated by semicolons
+    raise_code = code_strings.find { |s| s.include?("raise") }
+    statements = Prism.parse(raise_code).value.statements.body
+    assert_equal 1, statements.length,
+      "runtime_error should generate exactly one statement, not multiple.\n" \
+      "Generated code: #{raise_code}\n" \
+      "Statements: #{statements.map(&:class).inspect}"
   end
 
   # Normal error messages without special characters should work fine.
