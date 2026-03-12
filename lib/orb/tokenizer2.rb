@@ -21,6 +21,9 @@ module ORB
     # Maximum allowed brace nesting depth to prevent memory exhaustion
     MAX_BRACE_DEPTH = 100
 
+    # Maximum allowed template source size in bytes (2MB)
+    MAX_TEMPLATE_SIZE = 2 * 1024 * 1024
+
     # Tags that are self-closing by HTML5 spec
     VOID_ELEMENTS     = %w[area base br col command embed hr img input keygen link meta param source track wbr].freeze
 
@@ -44,6 +47,10 @@ module ORB
 
     # Main Entry
     def tokenize
+      if @source.string.bytesize > MAX_TEMPLATE_SIZE
+        raise ORB::SyntaxError.new("Template exceeds maximum size (#{MAX_TEMPLATE_SIZE} bytes)", 0)
+      end
+
       next_token until @source.eos?
 
       # Consume remaining buffer
