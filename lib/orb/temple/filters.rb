@@ -7,6 +7,11 @@ module ORB
       # Used to validate dynamic tag names before interpolation into generated Ruby code.
       VALID_HTML_TAG_NAME = /\A[a-zA-Z][a-zA-Z0-9-]*\z/
 
+      # Valid Ruby constant path: one or more segments like Foo, Foo::Bar, Foo::Bar::Baz.
+      # Each segment starts with an uppercase letter followed by word characters.
+      # Used to validate component names before interpolation into generated Ruby code.
+      VALID_COMPONENT_NAME = /\A[A-Z]\w*(::[A-Z]\w*)*\z/
+
       def initialize(options = {})
         @options = options
         @attributes_compiler = AttributesCompiler.new
@@ -36,6 +41,9 @@ module ORB
         name = node.tag.gsub('.', '::')
         komponent = ORB.lookup_component(name)
         komponent_name = komponent || name
+        unless komponent_name.match?(VALID_COMPONENT_NAME)
+          raise ORB::SyntaxError.new("Invalid component name: #{komponent_name.inspect}", 0)
+        end
 
         block_name = "__orb__#{komponent_name.rpartition('::').last.underscore}"
         block_name = node.directives.fetch(:with, block_name)

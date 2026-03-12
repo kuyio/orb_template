@@ -320,6 +320,24 @@ render Kernel::exit(1).new() do |...|
 
 **Recommendation:** Validate that resolved component names only contain expected characters (`A-Z`, `a-z`, `0-9`, `::`) and optionally maintain an allowlist of component namespaces.
 
+**Mitigation (applied):** In `lib/orb/temple/filters.rb`, a `VALID_COMPONENT_NAME` constant (`/\A[A-Z]\w*(::[A-Z]\w*)*\z/`) is declared and checked in `on_orb_component` after name resolution:
+
+```ruby
+VALID_COMPONENT_NAME = /\A[A-Z]\w*(::[A-Z]\w*)*\z/
+
+# In on_orb_component:
+komponent_name = komponent || name
+unless komponent_name.match?(VALID_COMPONENT_NAME)
+  raise ORB::SyntaxError.new("Invalid component name: #{komponent_name.inspect}", 0)
+end
+```
+
+This allows `Card`, `Demo::Card`, `UI::Forms::Input` but rejects names containing parentheses, semicolons, or lowercase-starting segments. The validation runs on the *resolved* name (after `lookup_component`), covering both the lookup result and the raw fallback.
+
+**Breaking change:** Templates using `<Foo::bar>` style slot syntax will now raise a `SyntaxError`. The canonical slot syntax `<Foo:Bar>` should be used instead.
+
+**Evidence:** `test_component_name_method_call_injection_is_rejected` and `test_component_name_semicolon_injection_is_rejected` pass (now with proper validation, not just the HIGH-2 side effect). The `:with` bypass is also blocked. Full test suite (86 non-security runs) shows no regressions.
+
 ---
 
 ### HIGH-5: Code Injection via Unvalidated Slot Names
@@ -584,7 +602,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 | **HIGH-1** (attribute XSS) | `test_dynamic_attribute_value_is_escaped` | PASSING (1) -- mitigated |
 | **HIGH-2** (:with injection) | `test_with_directive_component_injection_is_rejected`, `test_with_directive_slot_injection_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | PASSING (2) -- mitigated |
-| **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
+| **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
 | **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | FAILING (2) |
 | **MEDIUM-3** (runtime_error breakout) | `test_runtime_error_with_bracket_produces_valid_ruby`, `test_runtime_error_code_injection_is_rejected` | FAILING (2) |
