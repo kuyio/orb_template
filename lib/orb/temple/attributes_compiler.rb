@@ -89,7 +89,7 @@ module ORB
         elsif attribute.bool?
           [:html, :attr, attribute.name, [:dynamic, "nil"]]
         elsif attribute.expression?
-          [:html, :attr, attribute.name, [:dynamic, attribute.value]]
+          [:html, :attr, attribute.name, [:escape, true, [:dynamic, attribute.value]]]
         end
       end
 

@@ -162,9 +162,23 @@ Whether this is safe depends on Temple's downstream `Escapable` filter configura
 <!-- renders: <div class=""><script>alert(1)</script><div class=""> -->
 ```
 
-**Impact:** Cross-site scripting (XSS) if dynamic attribute values are not escaped by the Temple pipeline.
+**Impact:** Cross-site scripting (XSS) if dynamic attribute values are not escaped by the Temple pipeline. Unlike the template-authoring-only findings, this is exploitable at **runtime** through malicious data in any variable used in a dynamic attribute -- no template source compromise required.
 
 **Recommendation:** Explicitly wrap dynamic attribute values: `[:html, :attr, attribute.name, [:escape, true, [:dynamic, attribute.value]]]`
+
+**Mitigation (applied):** In `lib/orb/temple/attributes_compiler.rb:92`, the `compile_attribute` method now wraps expression attributes with `[:escape, true, ...]`:
+
+```ruby
+# Before
+[:html, :attr, attribute.name, [:dynamic, attribute.value]]
+
+# After
+[:html, :attr, attribute.name, [:escape, true, [:dynamic, attribute.value]]]
+```
+
+This causes Temple's `Escapable` filter to emit `::Temple::Utils.escape_html(...)` around dynamic attribute values, matching the escaping behavior already applied to printing expressions (`{{...}}`). Static and boolean attributes are unaffected. Existing assertions in `test/temple_compiler_test.rb` were updated to expect the new escaped IR.
+
+**Evidence:** `test_dynamic_attribute_value_is_escaped` now passes. Full test suite (123 runs) shows no regressions beyond the 18 expected security test failures for unmitigated findings.
 
 ---
 
