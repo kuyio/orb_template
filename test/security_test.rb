@@ -37,43 +37,35 @@ class SecurityTest < Minitest::Test
 
   # --- Collection-side injection ---
 
-  # Injecting code via the collection side of {#for} must not produce
-  # generated Ruby code containing the injected call.
+  # Injecting code via the collection side of {#for} must raise a SyntaxError
+  # because semicolons are not allowed in the collection expression.
   def test_for_collection_injection_is_rejected
     malicious_template = '{#for item in []; system("id"); [].each}content{/for}'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, 'system("id")',
-      "Injected code must not appear in generated Ruby output (collection side)"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # The Temple IR must not contain the injected code in any :code node.
   def test_for_collection_injection_absent_from_temple_ir
     malicious_template = '{#for x in items; malicious_call; arr}content{/for}'
 
-    temple = compile_to_temple(malicious_template)
-
-    code_nodes = extract_code_nodes(temple)
-    code_strings = code_nodes.map { |n| n[1] }
-
-    injected = code_strings.find { |s| s.include?("malicious_call") }
-    refute injected,
-      "Injected 'malicious_call' must not appear in a :code node in the Temple IR.\n" \
-      "Code nodes were: #{code_strings.inspect}"
+    assert_raises(ORB::SyntaxError) do
+      compile_to_temple(malicious_template)
+    end
   end
 
   # --- Enumerator-side injection ---
 
   # Injecting code via the enumerator (variable name) side of {#for}
-  # must not produce generated Ruby code containing the injected call.
+  # must raise a SyntaxError because the enumerator is not a valid identifier.
   def test_for_enumerator_injection_is_rejected
     malicious_template = '{#for x| ; malicious_call ; |y in items}content{/for}'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "malicious_call",
-      "Injected code must not appear in generated Ruby output (enumerator side)"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # --- :for directive on tags ---
@@ -82,10 +74,9 @@ class SecurityTest < Minitest::Test
   def test_for_directive_attribute_injection_is_rejected
     malicious_template = '<div :for="item in []; system(:pwned); []">content</div>'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "system(:pwned)",
-      "Injected code from :for directive attribute must not appear in generated Ruby output"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # ---------------------------------------------------------------------------

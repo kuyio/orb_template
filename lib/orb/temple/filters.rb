@@ -107,7 +107,17 @@ module ORB
       # @param [Array] content The content to be rendered for each iteration
       # @return [Array] compiled Temple expression
       def on_orb_for(expression, content)
-        enumerator, collection = expression.split(' in ')
+        match = expression.match(/\A\s*([a-z_]\w*)\s+in\s+(.+)\z/m)
+        raise ORB::SyntaxError.new("Invalid :for expression: enumerator must be a valid Ruby identifier", 0) unless match
+
+        enumerator, collection = match[1], match[2]
+
+        # Reject semicolons in the collection expression to prevent statement injection.
+        # Legitimate complex expressions should be assigned in a {%...%} block first.
+        if collection.include?(';')
+          raise ORB::SyntaxError.new("Invalid :for collection expression: semicolons are not allowed", 0)
+        end
+
         code = "#{collection}.each do |#{enumerator}|"
 
         [:multi,
