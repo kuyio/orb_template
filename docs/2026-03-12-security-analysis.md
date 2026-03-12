@@ -236,6 +236,19 @@ The same vulnerability exists in slot rendering (filters.rb:80-83).
 
 **Recommendation:** Validate that `:with` values match `/\A[a-z_][a-zA-Z0-9_]*\z/` (valid Ruby identifier).
 
+**Mitigation (applied):** In `lib/orb/temple/filters.rb`, both `on_orb_component` and `on_orb_slot` now validate the block name after resolving the `:with` directive:
+
+```ruby
+block_name = node.directives.fetch(:with, block_name)
+unless block_name.match?(/\A[a-z_]\w*\z/)
+  raise ORB::SyntaxError.new("Invalid :with directive value: must be a valid Ruby identifier", 0)
+end
+```
+
+This validation applies to both explicit `:with` values and the auto-generated default block names, providing defense-in-depth against malicious tag/slot names that produce invalid default identifiers (also catches HIGH-4 and HIGH-5 attack vectors as a side effect).
+
+**Evidence:** `test_with_directive_component_injection_is_rejected` and `test_with_directive_slot_injection_is_rejected` now pass. Full test suite (86 non-security runs) shows no regressions.
+
 ---
 
 ### HIGH-3: Unsafe Tag Name Interpolation in Dynamic Tags
@@ -554,10 +567,10 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 |---------|---------|--------|
 | **CRITICAL-1** (:for injection) | `test_for_collection_injection_is_rejected`, `test_for_collection_injection_absent_from_temple_ir`, `test_for_enumerator_injection_is_rejected`, `test_for_directive_attribute_injection_is_rejected` | PASSING (4) -- mitigated |
 | **HIGH-1** (attribute XSS) | `test_dynamic_attribute_value_is_escaped` | PASSING (1) -- mitigated |
-| **HIGH-2** (:with injection) | `test_with_directive_component_injection_is_rejected`, `test_with_directive_slot_injection_is_rejected` | FAILING (2) |
+| **HIGH-2** (:with injection) | `test_with_directive_component_injection_is_rejected`, `test_with_directive_slot_injection_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | FAILING (2) |
-| **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected` | FAILING (1) |
-| **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | FAILING (2) |
+| **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
+| **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
 | **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | FAILING (2) |
 | **MEDIUM-3** (runtime_error breakout) | `test_runtime_error_with_bracket_produces_valid_ruby`, `test_runtime_error_code_injection_is_rejected` | FAILING (2) |
 | **MEDIUM-4** (attribute name injection) | `test_attribute_name_with_single_quote_is_rejected`, `test_attribute_name_with_backtick_is_rejected` | FAILING (2) |
@@ -568,7 +581,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 
 Baseline tests (expected to always pass): `test_printing_expression_is_escaped_baseline`, `test_static_attribute_value_needs_no_runtime_escape`, `test_with_directive_normal_usage_compiles_correctly`, `test_dynamic_tag_normal_usage_compiles_correctly`, `test_component_name_dotted_namespace_compiles_correctly`, `test_slot_normal_usage_compiles_correctly`, `test_moderate_brace_nesting_works`, `test_runtime_error_normal_message_compiles_correctly`, `test_valid_attribute_names_compile_correctly`, `test_normal_sized_template_works`, `test_for_block_normal_usage_compiles_correctly`, `test_for_directive_normal_usage_compiles_correctly`.
 
-**Totals: 37 tests, 14 failing, 23 passing (5 mitigated).**
+**Totals: 37 tests, 9 failing, 28 passing (11 mitigated).**
 
 When mitigations are applied, each finding's failing tests should turn green while all baseline tests remain passing.
 

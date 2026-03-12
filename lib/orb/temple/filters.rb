@@ -35,6 +35,9 @@ module ORB
 
         block_name = "__orb__#{komponent_name.rpartition('::').last.underscore}"
         block_name = node.directives.fetch(:with, block_name)
+        unless block_name.match?(/\A[a-z_]\w*\z/)
+          raise ORB::SyntaxError.new("Invalid :with directive value: must be a valid Ruby identifier", 0)
+        end
 
         # We need to compile the attributes into a set of captures and a set of arguments
         # since arguments passed to the view component constructor may be defined as
@@ -78,6 +81,9 @@ module ORB
         slot_name = node.slot
         parent_name = "__orb__#{node.component.underscore}"
         block_name = node.directives.fetch(:with, "__orb__#{slot_name}")
+        unless block_name.match?(/\A[a-z_]\w*\z/)
+          raise ORB::SyntaxError.new("Invalid :with directive value: must be a valid Ruby identifier", 0)
+        end
 
         # Construct the code to call the slot on the parent component
         code = "#{parent_name}.with_#{slot_name}(#{args}) do |#{block_name}|"
