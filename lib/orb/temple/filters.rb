@@ -12,6 +12,10 @@ module ORB
       # Used to validate component names before interpolation into generated Ruby code.
       VALID_COMPONENT_NAME = /\A[A-Z]\w*(::[A-Z]\w*)*\z/
 
+      # Valid Ruby identifier for use as a method name suffix in with_[name] slot calls.
+      # Used to validate slot names before interpolation into generated Ruby code.
+      VALID_SLOT_NAME = /\A[a-z_]\w*\z/
+
       def initialize(options = {})
         @options = options
         @attributes_compiler = AttributesCompiler.new
@@ -91,6 +95,9 @@ module ORB
 
         # Prepare the slot name, parent name, and block name
         slot_name = node.slot
+        unless slot_name.match?(VALID_SLOT_NAME)
+          raise ORB::SyntaxError.new("Invalid slot name: #{slot_name.inspect}", 0)
+        end
         parent_name = "__orb__#{node.component.underscore}"
         block_name = node.directives.fetch(:with, "__orb__#{slot_name}")
         unless block_name.match?(/\A[a-z_]\w*\z/)

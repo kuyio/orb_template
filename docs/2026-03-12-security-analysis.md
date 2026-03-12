@@ -370,6 +370,22 @@ The `with_foo()` call closes normally, then `system(1)` executes, then `x()` beg
 
 **Recommendation:** Validate slot names against a strict pattern (valid Ruby identifier: `/\A[a-z_][a-zA-Z0-9_]*\z/`) after extraction from the tag name.
 
+**Mitigation (applied):** In `lib/orb/temple/filters.rb`, a `VALID_SLOT_NAME` constant (`/\A[a-z_]\w*\z/`) is declared and checked in `on_orb_slot` after extracting the slot name:
+
+```ruby
+VALID_SLOT_NAME = /\A[a-z_]\w*\z/
+
+# In on_orb_slot:
+slot_name = node.slot
+unless slot_name.match?(VALID_SLOT_NAME)
+  raise ORB::SyntaxError.new("Invalid slot name: #{slot_name.inspect}", 0)
+end
+```
+
+This allows `header`, `side_bar`, `footer_content` but rejects parentheses, semicolons, and anything that isn't a plain Ruby identifier. The validation is independent of the HIGH-2 `:with` check, so it cannot be bypassed by supplying a valid `:with` directive.
+
+**Evidence:** `test_slot_name_semicolon_injection_is_rejected` and `test_slot_name_with_parens_is_rejected` pass. The `:with` bypass is also blocked. Full test suite (86 non-security runs) shows no regressions.
+
 ---
 
 ## MEDIUM Findings
@@ -603,7 +619,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 | **HIGH-2** (:with injection) | `test_with_directive_component_injection_is_rejected`, `test_with_directive_slot_injection_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated |
-| **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
+| **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated |
 | **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | FAILING (2) |
 | **MEDIUM-3** (runtime_error breakout) | `test_runtime_error_with_bracket_produces_valid_ruby`, `test_runtime_error_code_injection_is_rejected` | FAILING (2) |
 | **MEDIUM-4** (attribute name injection) | `test_attribute_name_with_single_quote_is_rejected`, `test_attribute_name_with_backtick_is_rejected` | FAILING (2) |
