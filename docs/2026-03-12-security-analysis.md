@@ -461,6 +461,20 @@ Error messages are interpolated into a `%q[...]` string literal. The `%q[]` deli
 
 **Recommendation:** Use a delimiter that cannot appear in error messages (e.g., `%q{...}` with brace counting, or properly escape the content), or use `String#inspect` to safely serialize the message.
 
+**Mitigation (applied):** In `lib/orb/temple/compiler.rb:199`, replaced `%q[#{error.message}]` with `#{error.message.inspect}`:
+
+```ruby
+# Before
+temple << [:code, %[raise ORB::Error.new(%q[#{error.message}], #{error.line.inspect})]]
+
+# After
+temple << [:code, "raise ORB::Error.new(#{error.message.inspect}, #{error.line.inspect})"]
+```
+
+`String#inspect` produces a properly escaped double-quoted Ruby string literal. Any `]`, `"`, `\`, or other special characters are escaped, making delimiter breakout impossible. The generated code is always a single valid `raise` statement.
+
+**Evidence:** `test_runtime_error_with_bracket_produces_valid_ruby` and `test_runtime_error_code_injection_is_rejected` now pass. Full test suite (86 non-security runs) shows no regressions.
+
 ---
 
 ### MEDIUM-4: Attribute Name Injection
@@ -638,7 +652,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 | **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated |
 | **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | PASSING (2) -- mitigated |
-| **MEDIUM-3** (runtime_error breakout) | `test_runtime_error_with_bracket_produces_valid_ruby`, `test_runtime_error_code_injection_is_rejected` | FAILING (2) |
+| **MEDIUM-3** (runtime_error breakout) | `test_runtime_error_with_bracket_produces_valid_ruby`, `test_runtime_error_code_injection_is_rejected` | PASSING (2) -- mitigated |
 | **MEDIUM-4** (attribute name injection) | `test_attribute_name_with_single_quote_is_rejected`, `test_attribute_name_with_backtick_is_rejected` | FAILING (2) |
 | **LOW-1** (verbatim bypass) | `test_verbatim_mode_does_not_process_expressions`, `test_verbatim_mode_passes_html_through_raw` | PASSING (2) |
 | **LOW-2** (comment delimiter) | `test_comment_content_terminates_at_closing_delimiter` | PASSING (1) |
@@ -647,7 +661,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 
 Baseline tests (expected to always pass): `test_printing_expression_is_escaped_baseline`, `test_static_attribute_value_needs_no_runtime_escape`, `test_with_directive_normal_usage_compiles_correctly`, `test_dynamic_tag_normal_usage_compiles_correctly`, `test_component_name_dotted_namespace_compiles_correctly`, `test_slot_normal_usage_compiles_correctly`, `test_moderate_brace_nesting_works`, `test_runtime_error_normal_message_compiles_correctly`, `test_valid_attribute_names_compile_correctly`, `test_normal_sized_template_works`, `test_for_block_normal_usage_compiles_correctly`, `test_for_directive_normal_usage_compiles_correctly`.
 
-**Totals: 37 tests, 5 failing, 32 passing (15 mitigated).**
+**Totals: 37 tests, 3 failing, 34 passing (17 mitigated).**
 
 When mitigations are applied, each finding's failing tests should turn green while all baseline tests remain passing.
 

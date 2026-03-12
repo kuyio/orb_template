@@ -196,7 +196,7 @@ module ORB
       def runtime_error(error)
         [:multi].tap do |temple|
           (error.line - 1).times { temple << [:newline] } if error.line
-          temple << [:code, %[raise ORB::Error.new(%q[#{error.message}], #{error.line.inspect})]]
+          temple << [:code, "raise ORB::Error.new(#{error.message.inspect}, #{error.line.inspect})"]
         end
       end
     end
