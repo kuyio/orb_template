@@ -598,14 +598,11 @@ class SecurityTest < Minitest::Test
   # See: security-analysis.md, LOW-3
   # ---------------------------------------------------------------------------
 
-  # A very large template should either be rejected or complete within a
-  # reasonable time bound. This test documents the lack of a size limit.
+  # A template exceeding the maximum size limit should be rejected.
   def test_large_template_has_size_limit
-    # 1MB of text -- should either be rejected or tokenize quickly
-    large_source = "x" * 1_000_000
+    # Just over the 2MB limit
+    large_source = "x" * (2 * 1024 * 1024 + 1)
 
-    # Currently there is no size limit, so this will succeed.
-    # When a limit is added, this should raise an error.
     assert_raises(ORB::SyntaxError) do
       ORB::Tokenizer2.new(large_source).tokenize
     end
