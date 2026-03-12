@@ -389,6 +389,7 @@ To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
   - [x] `:for` directive
   - [x] verbatim tags
   - [x] ensure output safety and proper escaping of output
+  - [x] security review and hardening of compilation pipeline
   - [x] track locations (start_line, start_col, end_line, end_col) for Tokens and AST Nodes to support better error output
   - [x] make Lexer, Parser, Compiler robust to malformed input (e.g., unclosed tags)
   - [ ] emit an warning/error when void tags contain children
@@ -414,8 +415,23 @@ To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
   - [ ] support additional directives, for instance, `Turbo` or `Stimulus` specific directives
   - [ ] support additional block constructs
   - [ ] support additional language constructs
+  - [ ] replace `OpenStruct`-based `RenderContext` with a `BasicObject` subclass to reduce attack surface
+  - [ ] fuzz testing of tokenizer and parser for edge case discovery
+  - [ ] Brakeman integration with custom rules to flag unsafe ORB patterns
+  - [ ] tighten `TAG_NAME` pattern at the tokenizer level as defense-in-depth
 
-> This library is in beta stage and demonstrates the technical aspects of a custom DSL for rendering ViewComponent objects in an HTML-like manner. It is meant as a kick-off point for further discussion on the definition and implementation of the template language. It may contain critical bugs that could compromise the security and integrity of your application. Additionally, the API and DSL are likely to change as the library evolves to a stable state. Don't say we didn't warn you!
+## Security
+
+ORB follows the same trust model as ERB, HAML, and SLIM: templates are developer-authored and loaded from the filesystem. **Never construct ORB templates from user input.**
+
+The compilation pipeline has been hardened against code injection, XSS, and denial-of-service attacks:
+
+- All values interpolated into generated Ruby code (`:for` expressions, `:with` directives, tag names, component names, slot names) are validated against strict patterns before interpolation.
+- Dynamic attribute values (`class={expr}`) are HTML-escaped at render time, matching the escaping behavior of printing expressions (`{{expr}}`).
+- Attribute names are restricted to valid HTML spec characters.
+- Resource limits are enforced: maximum brace nesting depth (100) and maximum template size (2MB).
+
+For details, see [`docs/2026-03-12-security-analysis.md`](docs/2026-03-12-security-analysis.md).
 
 ## Development
 
