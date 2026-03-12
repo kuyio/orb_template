@@ -3,6 +3,10 @@
 module ORB
   module Temple
     class Filters < ::Temple::Filter
+      # Valid HTML tag names: starts with a letter, followed by letters, digits, or hyphens.
+      # Used to validate dynamic tag names before interpolation into generated Ruby code.
+      VALID_HTML_TAG_NAME = /\A[a-zA-Z][a-zA-Z0-9-]*\z/
+
       def initialize(options = {})
         @options = options
         @attributes_compiler = AttributesCompiler.new
@@ -141,6 +145,9 @@ module ORB
           on_orb_slot(node, content)
         else
           # It's a dynamic HTML tag
+          unless node.tag.match?(VALID_HTML_TAG_NAME)
+            raise ORB::SyntaxError.new("Invalid tag name: #{node.tag.inspect}", 0)
+          end
           tmp = unique_name
           splats = @attributes_compiler.compile_splat_attributes(node.splat_attributes)
           code = "content_tag('#{node.tag}', #{splats}) do"

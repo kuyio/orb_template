@@ -184,33 +184,26 @@ class SecurityTest < Minitest::Test
   # See: security-analysis.md, HIGH-3
   # ---------------------------------------------------------------------------
 
-  # A tag name containing quotes and semicolons must not result in code injection.
+  # A tag name containing quotes and semicolons must raise a SyntaxError.
   # Payload: div');system(:pwned);content_tag('x
   # This would generate: content_tag('div');system(:pwned);content_tag('x', ...) do
   def test_dynamic_tag_name_injection_is_rejected
-    # Build the malicious tag name without spaces (spaces aren't allowed in TAG_NAME)
-    # The tag name is: div');system(:pwned);content_tag('x
     malicious_open = "<div');system(:pwned);content_tag('x **{attrs}>content"
     malicious_close = "</div');system(:pwned);content_tag('x>"
 
-    generated_code = compile(malicious_open + malicious_close)
-
-    refute_includes generated_code, "system(:pwned)",
-      "Injected code via tag name must not appear in generated Ruby output.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_open + malicious_close)
+    end
   end
 
-  # A tag name containing just a single quote must not break the generated string.
+  # A tag name containing just a single quote must raise a SyntaxError.
   def test_dynamic_tag_name_with_quote_is_rejected
     malicious_open = "<div' **{attrs}>content"
     malicious_close = "</div'>"
 
-    generated_code = compile(malicious_open + malicious_close)
-
-    # The generated code should not contain an unbalanced/broken string literal
-    refute_includes generated_code, "content_tag('div''",
-      "Tag name with quote must not produce broken string literal in generated code.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_open + malicious_close)
+    end
   end
 
   # Normal dynamic HTML tag with splat should still work.
