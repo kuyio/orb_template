@@ -275,6 +275,21 @@ content_tag('div');system(:pwned);content_tag('x', **attrs) do
 
 **Recommendation:** Validate tag names against a strict pattern (alphanumeric, hyphens, dots, colons only) before interpolating into generated code.
 
+**Mitigation (applied):** In `lib/orb/temple/filters.rb`, a `VALID_HTML_TAG_NAME` constant (`/\A[a-zA-Z][a-zA-Z0-9-]*\z/`) is declared and checked in `on_orb_dynamic` before the tag name is interpolated:
+
+```ruby
+VALID_HTML_TAG_NAME = /\A[a-zA-Z][a-zA-Z0-9-]*\z/
+
+# In on_orb_dynamic, HTML tag branch:
+unless node.tag.match?(VALID_HTML_TAG_NAME)
+  raise ORB::SyntaxError.new("Invalid tag name: #{node.tag.inspect}", 0)
+end
+```
+
+This allows standard HTML tags (`div`, `h1`, `my-element`) but rejects quotes, semicolons, parentheses, and other characters that could break out of the generated string literal. Components and slots are dispatched before this branch and are not affected.
+
+**Evidence:** `test_dynamic_tag_name_injection_is_rejected` and `test_dynamic_tag_name_with_quote_is_rejected` now pass. Full test suite (86 non-security runs) shows no regressions.
+
 ---
 
 ### HIGH-4: Unvalidated Component Name Used as Ruby Constant
@@ -568,7 +583,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 | **CRITICAL-1** (:for injection) | `test_for_collection_injection_is_rejected`, `test_for_collection_injection_absent_from_temple_ir`, `test_for_enumerator_injection_is_rejected`, `test_for_directive_attribute_injection_is_rejected` | PASSING (4) -- mitigated |
 | **HIGH-1** (attribute XSS) | `test_dynamic_attribute_value_is_escaped` | PASSING (1) -- mitigated |
 | **HIGH-2** (:with injection) | `test_with_directive_component_injection_is_rejected`, `test_with_directive_slot_injection_is_rejected` | PASSING (2) -- mitigated |
-| **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | FAILING (2) |
+| **HIGH-3** (tag name injection) | `test_dynamic_tag_name_injection_is_rejected`, `test_dynamic_tag_name_with_quote_is_rejected` | PASSING (2) -- mitigated |
 | **HIGH-4** (component name injection) | `test_component_name_method_call_injection_is_rejected`, `test_component_name_semicolon_injection_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
 | **HIGH-5** (slot name injection) | `test_slot_name_semicolon_injection_is_rejected`, `test_slot_name_with_parens_is_rejected` | PASSING (2) -- mitigated via HIGH-2 defense-in-depth |
 | **MEDIUM-1** (brace nesting DoS) | `test_deeply_nested_braces_in_expression_raises_error`, `test_deeply_nested_braces_in_attribute_raises_error` | FAILING (2) |
@@ -581,7 +596,7 @@ All findings are covered by regression tests in `test/security_test.rb`. Tests a
 
 Baseline tests (expected to always pass): `test_printing_expression_is_escaped_baseline`, `test_static_attribute_value_needs_no_runtime_escape`, `test_with_directive_normal_usage_compiles_correctly`, `test_dynamic_tag_normal_usage_compiles_correctly`, `test_component_name_dotted_namespace_compiles_correctly`, `test_slot_normal_usage_compiles_correctly`, `test_moderate_brace_nesting_works`, `test_runtime_error_normal_message_compiles_correctly`, `test_valid_attribute_names_compile_correctly`, `test_normal_sized_template_works`, `test_for_block_normal_usage_compiles_correctly`, `test_for_directive_normal_usage_compiles_correctly`.
 
-**Totals: 37 tests, 9 failing, 28 passing (11 mitigated).**
+**Totals: 37 tests, 7 failing, 30 passing (13 mitigated).**
 
 When mitigations are applied, each finding's failing tests should turn green while all baseline tests remain passing.
 
