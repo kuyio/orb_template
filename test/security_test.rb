@@ -137,26 +137,22 @@ class SecurityTest < Minitest::Test
   # See: security-analysis.md, HIGH-2
   # ---------------------------------------------------------------------------
 
-  # Injecting code via :with on a component must be rejected.
+  # Injecting code via :with on a component must raise a SyntaxError.
   def test_with_directive_component_injection_is_rejected
     malicious_template = '<Card :with="x| ; system(:pwned) ; |y">content</Card>'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "system(:pwned)",
-      "Injected code via :with directive on component must not appear in generated Ruby output.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
-  # Injecting code via :with on a component slot must be rejected.
+  # Injecting code via :with on a component slot must raise a SyntaxError.
   def test_with_directive_slot_injection_is_rejected
     malicious_template = '<Card><Card:Header :with="x| ; system(:pwned) ; |y">content</Card:Header></Card>'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "system(:pwned)",
-      "Injected code via :with directive on slot must not appear in generated Ruby output.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # Normal :with usage should still work.
@@ -254,22 +250,18 @@ class SecurityTest < Minitest::Test
   def test_component_name_method_call_injection_is_rejected
     malicious_template = '<Kernel.exit(1)>content</Kernel.exit(1)>'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "Kernel::exit(1)",
-      "Component name with parens must not compile to a method call.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # A component name with semicolons must not inject additional statements.
   def test_component_name_semicolon_injection_is_rejected
     malicious_template = '<Foo;system(:pwned);Bar>content</Foo;system(:pwned);Bar>'
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "system(:pwned)",
-      "Component name with semicolons must not inject code.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # A dotted component name mapping to a real namespace should still work.
@@ -497,22 +489,18 @@ class SecurityTest < Minitest::Test
   def test_slot_name_semicolon_injection_is_rejected
     malicious_template = "<Card><Card:Foo();system(1);x>content</Card:Foo();system(1);x></Card>"
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "system(1)",
-      "Injected code via slot name must not appear in generated Ruby output.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # A slot name with parentheses must not produce double-parens or method calls.
   def test_slot_name_with_parens_is_rejected
     malicious_template = "<Card><Card:Foo()>content</Card:Foo()></Card>"
 
-    generated_code = compile(malicious_template)
-
-    refute_includes generated_code, "with_foo()()",
-      "Slot name with parens must not produce broken method calls.\n" \
-      "Generated code was: #{generated_code}"
+    assert_raises(ORB::SyntaxError) do
+      compile(malicious_template)
+    end
   end
 
   # Normal slot usage should still work.
