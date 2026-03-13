@@ -407,10 +407,10 @@ To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
   - [ ] full YARD-compatible documentation of the library
 - [ ] **Step 3: Make it fast**
   - [x] convert Lexer code to `StringScanner`
-  - [ ] create benchmark suite to establish baseline
+  - [x] create benchmark suite to establish baseline
   - [ ] possibly merge lexer states through more intelligent look-ahead
-  - [ ] optimize AST Parser
-  - [ ] optimize Compiler
+  - [x] optimize AST Parser
+  - [x] optimize Compiler
 - [ ] **Step 4: Evolve**
   - [ ] support additional directives, for instance, `Turbo` or `Stimulus` specific directives
   - [ ] support additional block constructs
