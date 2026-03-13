@@ -296,6 +296,38 @@ class Tokenizer2Test < Minitest::Test
     ]
   end
 
+  def test_tokenize_tag_with_alpine_shorthand_attributes
+    source = '<button @click="open = !open" @submit.prevent="save()">Go</button>'
+    tokenizer = ORB::Tokenizer2.new(source)
+    tokens = tokenizer.tokenize
+
+    assert_equal tokens, [
+      ORB::Token.new(:tag_open, "button", line: 1, column: 1, self_closing: false,
+        attributes: [
+          ["@click", :string, "open = !open"],
+          ["@submit.prevent", :string, "save()"]
+        ]),
+      ORB::Token.new(:text, "Go", line: 1, column: 56),
+      ORB::Token.new(:tag_close, "button", line: 1, column: 58)
+    ]
+  end
+
+  def test_tokenize_tag_with_alpine_namespaced_attributes
+    source = '<div x-on:change="handler" x-bind:class="active">test</div>'
+    tokenizer = ORB::Tokenizer2.new(source)
+    tokens = tokenizer.tokenize
+
+    assert_equal tokens, [
+      ORB::Token.new(:tag_open, "div", line: 1, column: 1, self_closing: false,
+        attributes: [
+          ["x-on:change", :string, "handler"],
+          ["x-bind:class", :string, "active"]
+        ]),
+      ORB::Token.new(:text, "test", line: 1, column: 50),
+      ORB::Token.new(:tag_close, "div", line: 1, column: 54)
+    ]
+  end
+
   def test_tokenizes_verbatim_tag
     source = %q(<Verbatim$>This is <span>verbatim</span> content</Verbatim$>)
     tokenizer = ORB::Tokenizer2.new(source)
