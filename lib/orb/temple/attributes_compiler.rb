@@ -81,13 +81,14 @@ module ORB
       # an attribute can be a static string, a dynamic expression,
       # or a boolean attribute (an attribute without a value, e.g. disabled, checked, etc.)
       #
-      # For boolean attributes, we return a [:dynamic, "nil"] expression, so that the
-      # final render for the attribute will be `attribute` instead of `attribute="true"`
+      # Compile a single attribute into Temple core abstraction.
+      # Boolean attributes emit [:static, ""] directly instead of [:dynamic, "nil"]
+      # to avoid unnecessary Ripper analysis in Temple's StaticAnalyzer filter.
       def compile_attribute(attribute)
         if attribute.string?
           [:html, :attr, attribute.name, [:static, attribute.value]]
         elsif attribute.bool?
-          [:html, :attr, attribute.name, [:dynamic, "nil"]]
+          [:html, :attr, attribute.name, [:static, ""]]
         elsif attribute.expression?
           [:html, :attr, attribute.name, [:escape, true, [:dynamic, attribute.value]]]
         end
@@ -115,8 +116,45 @@ module ORB
         end
       end
 
+      # Pre-build the variable name string with a single interpolation
       def prefixed_variable_name(name, prefix)
         "#{prefix}_arg_#{name.underscore}"
+      end
+
+      # Combined single-pass compilation of captures and komponent args
+      # Returns [captures_array, args_string]
+      def compile_captures_and_args(attributes, prefix)
+        captures = []
+        args = {}
+        splats = []
+
+        attributes.each do |attribute|
+          if attribute.splat?
+            splats << attribute.value
+            next
+          end
+
+          var_name = prefixed_variable_name(attribute.name, prefix)
+
+          # Build capture
+          if attribute.string?
+            captures << [:code, "#{var_name} = \"#{attribute.value}\""]
+          elsif attribute.bool?
+            captures << [:code, "#{var_name} = true"]
+          elsif attribute.expression?
+            captures << [:code, "#{var_name} = #{attribute.value}"]
+          end
+
+          # Build args hash
+          args = args.deep_merge(dash_to_hash(attribute.name, var_name))
+        end
+
+        # Build the argument list
+        result_parts = []
+        result_parts << hash_to_args_list(args) unless args.empty?
+        result_parts += splats
+
+        [captures, result_parts.join(', ')]
       end
     end
   end

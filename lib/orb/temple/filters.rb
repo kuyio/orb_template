@@ -60,11 +60,9 @@ module ORB
           raise ORB::SyntaxError.new("Invalid :with directive value: must be a valid Ruby identifier", 0)
         end
 
-        # We need to compile the attributes into a set of captures and a set of arguments
-        # since arguments passed to the view component constructor may be defined as
-        # dynamic expressions in our template, and we need to first capture their results.
-        arg_captures = @attributes_compiler.compile_captures(node.attributes, tmp)
-        args = @attributes_compiler.compile_komponent_args(node.attributes, tmp)
+        # Compile attributes in a single pass: captures for variable assignment +
+        # args string for the component constructor call.
+        arg_captures, args = @attributes_compiler.compile_captures_and_args(node.attributes, tmp)
 
         # Construct the render call for the view component
         code = "render #{komponent_name}.new(#{args}) do |#{block_name}|"
@@ -92,17 +90,15 @@ module ORB
       def on_orb_slot(node, content = [])
         tmp = unique_name
 
-        # We need to compile the attributes into a set of captures and a set of arguments
-        # since arguments passed to the view component constructor may be defined as
-        # dynamic expressions in our template, and we need to first capture their results.
-        arg_captures = @attributes_compiler.compile_captures(node.attributes, tmp)
-        args = @attributes_compiler.compile_komponent_args(node.attributes, tmp)
+        # Compile attributes in a single pass
+        arg_captures, args = @attributes_compiler.compile_captures_and_args(node.attributes, tmp)
 
         # Prepare the slot name, parent name, and block name
         slot_name = node.slot
         unless slot_name.match?(VALID_SLOT_NAME)
           raise ORB::SyntaxError.new("Invalid slot name: #{slot_name.inspect}", 0)
         end
+
         parent_name = "__orb__#{node.component.underscore}"
         block_name = node.directives.fetch(:with, "__orb__#{slot_name}")
         unless block_name.match?(VALID_SLOT_NAME)
@@ -139,9 +135,13 @@ module ORB
       def on_orb_for(expression, content)
         # Match single identifier or tuple-destructured identifiers (e.g., "key, value" or "(key, value)")
         match = expression.match(VALID_FOR_EXPRESSION)
-        raise ORB::SyntaxError.new("Invalid :for expression: enumerator must be a valid Ruby identifier", 0) unless match
+        unless match
+          raise ORB::SyntaxError.new("Invalid :for expression: enumerator must be a valid Ruby identifier",
+            0)
+        end
 
-        enumerator, collection = match[1], match[2]
+        enumerator = match[1]
+        collection = match[2]
 
         # Reject semicolons in the collection expression to prevent statement injection.
         # Legitimate complex expressions should be assigned in a {%...%} block first.
@@ -169,6 +169,7 @@ module ORB
           unless node.tag.match?(VALID_HTML_TAG_NAME)
             raise ORB::SyntaxError.new("Invalid tag name: #{node.tag.inspect}", 0)
           end
+
           tmp = unique_name
           splats = @attributes_compiler.compile_splat_attributes(node.splat_attributes)
           code = "content_tag('#{node.tag}', #{splats}) do"

@@ -4,7 +4,7 @@ module ORB
   module Patterns
     SPACE_CHARS                   = /\s/
     TAG_NAME                      = %r{[^\s>/=$]+}
-    ATTRIBUTE_NAME                = %r{[a-zA-Z_:][-a-zA-Z0-9_:.]*}
+    ATTRIBUTE_NAME                = /[a-zA-Z_:][-a-zA-Z0-9_:.]*/
     UNQUOTED_VALUE_INVALID_CHARS  = /["'=<`]/
     UNQUOTED_VALUE                = %r{[^\s/>]+}
     BLOCK_NAME_CHARS              = /[^\s}]+/
@@ -37,5 +37,17 @@ module ORB
     CRLF                          = /\r\n/
     BLANK                         = /[[:blank:]]/
     OTHER                         = /./
+
+    # Greedy multi-character patterns for bulk scanning in each tokenizer state.
+    # Each pattern excludes only the characters that could start a delimiter in
+    # that state, so the tokenizer consumes runs of "boring" text in one match
+    # instead of character-by-character.
+    INITIAL_TEXT                  = /[^\n\r{<]+/
+    EXPRESSION_TEXT               = /[^\n\r{}]+/
+    COMMENT_TEXT                  = /[^\n\r-]+/
+    VERBATIM_TEXT                 = /[^\n\r<]+/
+    SINGLE_QUOTED_TEXT            = /[^\n\r']+/
+    DOUBLE_QUOTED_TEXT            = /[^\n\r"]+/
+    BLOCK_CONTENT_TEXT            = /[^{}\n\r]+/
   end
 end

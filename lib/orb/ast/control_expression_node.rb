@@ -13,14 +13,16 @@ module ORB
       def initialize(token)
         super
         @expression = token.value
+        @is_block = BLOCK_RE.match?(@expression)
+        @is_end = @expression == 'end' || @expression.strip == 'end'
       end
 
       def block?
-        @expression =~ BLOCK_RE
+        @is_block
       end
 
       def end?
-        @expression.strip == 'end'
+        @is_end
       end
     end
   end

@@ -195,7 +195,7 @@ class TempleCompilerTest < Minitest::Test
     compiler = ::ORB::Temple::AttributesCompiler.new
     temple = compiler.compile_attribute(attribute)
 
-    assert_equal temple, [:html, :attr, "disabled", [:dynamic, "nil"]]
+    assert_equal temple, [:html, :attr, "disabled", [:static, ""]]
   end
 
   # Compile a :expr attribute to a Temple [:html, :attr] expression
@@ -219,7 +219,7 @@ class TempleCompilerTest < Minitest::Test
 
     assert_equal temple, [:html, :attrs,
       [:html, :attr, "class", [:static, "foo"]],
-      [:html, :attr, "disabled", [:dynamic, "nil"]],
+      [:html, :attr, "disabled", [:static, ""]],
       [:html, :attr, "sum", [:escape, true, [:dynamic, "1 + 1"]]]]
   end
 

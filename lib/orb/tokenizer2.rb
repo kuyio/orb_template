@@ -34,7 +34,6 @@ module ORB
       @raise_errors = options.fetch(:raise_errors, true)
 
       # Streaming Tokenizer State
-      @cursor = 0
       @column = 1
       @line = 1
       @errors = []
@@ -42,7 +41,7 @@ module ORB
       @attributes = []
       @braces = []
       @state = :initial
-      @buffer = StringIO.new
+      @buffer = +''
     end
 
     # Main Entry
@@ -66,11 +65,6 @@ module ORB
 
     # Dispatcher based on current state
     def next_token
-      # Detect infinite loop
-      # if @previous_cursor == @cursor && @previous_state == @state
-      #   raise "Internal Error: detected infinite loop in :#{@state}"
-      # end
-
       # Dispatch to state handler
       send(:"next_in_#{@state}")
     end
@@ -124,7 +118,7 @@ module ORB
         add_token(:tag_open, nil)
         move_by_matched
         transition_to(:tag_open)
-      elsif @source.scan(OTHER)
+      elsif @source.scan(INITIAL_TEXT) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -243,7 +237,7 @@ module ORB
         current_attribute[2] = attribute_value
         move_by_matched
         transition_to(:tag_open_content)
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(SINGLE_QUOTED_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -259,7 +253,7 @@ module ORB
         current_attribute[2] = attribute_value
         move_by_matched
         transition_to(:tag_open_content)
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(DOUBLE_QUOTED_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -285,7 +279,7 @@ module ORB
           move_by_matched
           transition_to(:tag_open_content)
         end
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(EXPRESSION_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -311,7 +305,7 @@ module ORB
           clear_braces
           transition_to(:tag_open_content)
         end
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(EXPRESSION_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -356,7 +350,7 @@ module ORB
         update_current_token(text)
         move_by_matched
         transition_to(:initial)
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(COMMENT_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -371,7 +365,7 @@ module ORB
         update_current_token(text)
         move_by_matched
         transition_to(:initial)
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(COMMENT_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       else
@@ -409,7 +403,7 @@ module ORB
           buffer_matched
           move_by_matched
         end
-      elsif @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(BLOCK_CONTENT_TEXT) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       end
@@ -508,7 +502,7 @@ module ORB
           buffer(tmp)
           move_by(tmp)
         end
-      elsif @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(BLANK) || @source.scan(OTHER)
+      elsif @source.scan(VERBATIM_TEXT) || @source.scan(NEWLINE) || @source.scan(CRLF) || @source.scan(OTHER)
         buffer_matched
         move_by_matched
       end
@@ -551,6 +545,7 @@ module ORB
       if @braces.length >= MAX_BRACE_DEPTH
         raise ORB::SyntaxError.new("Maximum brace nesting depth (#{MAX_BRACE_DEPTH}) exceeded", @line)
       end
+
       @braces << "{"
     end
 
@@ -560,14 +555,15 @@ module ORB
       @column = column
     end
 
+    # Update line/column tracking from a matched string.
+    # Uses String#count and String#rindex instead of re-scanning with StringScanner.
     def move_by(str)
-      scan = StringScanner.new(str)
-      until scan.eos?
-        if scan.scan(NEWLINE) || scan.scan(CRLF)
-          move(@line + 1, 1)
-        elsif scan.scan(OTHER)
-          move(@line, @column + scan.matched.size)
-        end
+      newlines = str.count("\n")
+      if newlines.positive?
+        @line += newlines
+        @column = str.length - str.rindex("\n")
+      else
+        @column += str.length
       end
     end
 
@@ -582,7 +578,11 @@ module ORB
 
     # Create a new token
     def create_token(type, value, meta = {})
-      Token.new(type, value, meta.merge(line: @line, column: @column) { |_k, v1, _v2| v1 })
+      if meta.empty?
+        Token.new(type, value, { line: @line, column: @column })
+      else
+        Token.new(type, value, { line: @line, column: @column }.merge!(meta))
+      end
     end
 
     # Create a token and add it to the token list
@@ -603,18 +603,18 @@ module ORB
 
     # Read the buffer to a string
     def read_buffer
-      @buffer.string.clone
+      @buffer.dup
     end
 
     # Clear the buffer
     def clear_buffer
-      @buffer = StringIO.new
+      @buffer = +''
     end
 
     # Read the buffer to a string and clear it
     def consume_buffer
-      str = read_buffer
-      clear_buffer
+      str = @buffer
+      @buffer = +''
       str
     end
 

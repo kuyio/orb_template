@@ -1,5 +1,30 @@
 ## [Unreleased]
 
+## [0.2.2] - 2026-03-13
+
+### Fixed
+
+- Tuple destructuring in `:for` expressions now works correctly (e.g., `{#for name, spec in @tokens}`)
+
+### Performance
+
+- **33% faster** compilation pipeline for realistic templates, up to **52% faster** for expression-heavy templates
+- Removed Temple `StaticAnalyzer` filter from engine pipeline -- ORB never emits static expressions as `:dynamic` nodes, so Ripper lexing/parsing on every dynamic node was pure overhead
+- Boolean attributes now emit `[:static, ""]` directly instead of `[:dynamic, "nil"]`, avoiding unnecessary Ripper analysis
+- Cached `block?`/`end?` regex results in expression node constructors (computed once instead of on every call)
+- Optimized `Identity.generate` with direct string interpolation instead of array/compact/join
+- Lazy-initialized `@errors` on AST nodes, saving one array allocation per node
+- Removed unused `context={}` parameter from all compiler transform methods, eliminating hash allocation per recursive call
+- Added single-pass `compile_captures_and_args` to `AttributesCompiler`, reducing double iteration over attributes
+- Optimized `Token` constructor to avoid `method_missing` overhead and skip hash merge for common no-meta case
+- Tokenizer: replaced per-call `StringScanner` allocation in `move_by` with `String#count`/`rindex`
+- Tokenizer: switched from `StringIO` to `String` buffer with swap-on-consume pattern
+- Tokenizer: added greedy multi-character scanning patterns for bulk text consumption in 9 tokenizer states
+
+### Added
+
+- Benchmark test suite (`test/benchmark_test.rb`) with 8 template categories, per-template regression thresholds, stage-level profiling, and Temple IR node count tracking
+
 ## [0.2.0] - 2026-03-12
 
 ### Security

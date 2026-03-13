@@ -30,7 +30,10 @@ module ORB
       html :Fast
       filter :Ambles
       filter :Escapable
-      filter :StaticAnalyzer
+      # NOTE: StaticAnalyzer intentionally omitted. It calls Ripper.lex + Ripper.parse
+      # on every [:dynamic, ...] node to check if it's actually a static expression.
+      # ORB's compiler never emits static expressions as :dynamic nodes, so this
+      # filter always concludes "not static" -- pure overhead (Ripper is expensive).
       filter :ControlFlow
       filter :MultiFlattener
       filter :StaticMerger

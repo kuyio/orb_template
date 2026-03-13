@@ -286,7 +286,7 @@ class SecurityTest < Minitest::Test
   # rather than consuming unbounded memory.
   def test_deeply_nested_braces_in_expression_raises_error
     depth = 1000
-    source = "{{ " + ("{" * depth) + ("}" * depth) + " }}"
+    source = "{{ #{'{' * depth}#{'}' * depth} }}"
 
     assert_raises(ORB::SyntaxError) do
       ORB::Tokenizer2.new(source).tokenize
@@ -296,7 +296,7 @@ class SecurityTest < Minitest::Test
   # Deeply nested braces in an attribute expression should also be limited.
   def test_deeply_nested_braces_in_attribute_raises_error
     depth = 1000
-    source = "<div class={" + ("{" * depth) + ("}" * depth) + "}>text</div>"
+    source = "<div class={#{'{' * depth}#{'}' * depth}}>text</div>"
 
     assert_raises(ORB::SyntaxError) do
       ORB::Tokenizer2.new(source).tokenize
@@ -338,7 +338,7 @@ class SecurityTest < Minitest::Test
     temple = compiler.call(error)
 
     code_nodes = extract_code_nodes(temple)
-    code_strings = code_nodes.map { |n| n[1] }
+    code_strings = code_nodes.pluck(1)
 
     # Every generated :code node must be valid Ruby
     code_strings.each do |code|
@@ -363,7 +363,7 @@ class SecurityTest < Minitest::Test
     temple = compiler.call(error)
 
     code_nodes = extract_code_nodes(temple)
-    code_strings = code_nodes.map { |n| n[1] }
+    code_strings = code_nodes.pluck(1)
 
     # The generated code must be valid Ruby
     code_strings.each do |code|
@@ -392,7 +392,7 @@ class SecurityTest < Minitest::Test
     temple = compiler.call(error)
 
     code_nodes = extract_code_nodes(temple)
-    code_strings = code_nodes.map { |n| n[1] }
+    code_strings = code_nodes.pluck(1)
 
     raise_code = code_strings.find { |s| s.include?("raise") }
     assert raise_code, "runtime_error should generate a raise statement"
@@ -577,7 +577,8 @@ class SecurityTest < Minitest::Test
     temple = compile_to_temple(template)
 
     # Flatten to find all :static nodes inside :comment tuples vs plain :static
-    # The IR should be: [:multi, [:html, :comment, [:static, " before "]], [:static, " breakout "], [:html, :comment, [:static, " after "]]]
+    # The IR should be:
+    # [:multi, [:html, :comment, [:static, " before "]], [:static, " breakout "], ...]
     comment_nodes = extract_html_comment_nodes(temple)
     comment_texts = comment_nodes.map { |n| n[2][1] }
 
@@ -601,7 +602,7 @@ class SecurityTest < Minitest::Test
   # A template exceeding the maximum size limit should be rejected.
   def test_large_template_has_size_limit
     # Just over the 2MB limit
-    large_source = "x" * (2 * 1024 * 1024 + 1)
+    large_source = "x" * ((2 * 1024 * 1024) + 1)
 
     assert_raises(ORB::SyntaxError) do
       ORB::Tokenizer2.new(large_source).tokenize
@@ -614,7 +615,7 @@ class SecurityTest < Minitest::Test
 
     tokens = ORB::Tokenizer2.new(template).tokenize
 
-    assert tokens.length > 0, "Normal-sized template should tokenize successfully"
+    assert tokens.length.positive?, "Normal-sized template should tokenize successfully"
   end
 
   # ---------------------------------------------------------------------------
@@ -633,7 +634,7 @@ class SecurityTest < Minitest::Test
     re = ORB::AST::PrintingExpressionNode::BLOCK_RE
 
     # "do" followed by 50k spaces then a non-matching character
-    pathological_input = "do " + (" " * 50_000) + "!"
+    pathological_input = "do #{' ' * 50_000}!"
 
     start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     pathological_input =~ re

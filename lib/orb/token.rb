@@ -9,7 +9,7 @@ module ORB
       @type = type
       @value = value
       @meta = meta
-      @line = line || 0
+      @line = meta[:line] || 0
     end
 
     def set_meta(key, value)

@@ -9,7 +9,11 @@ module ORB
 
       def generate(prefix = nil)
         @unique_id += 1
-        ["_orb_compiler", prefix, @unique_id].compact.join('_')
+        if prefix
+          "_orb_compiler_#{prefix}_#{@unique_id}"
+        else
+          "_orb_compiler_#{@unique_id}"
+        end
       end
     end
   end

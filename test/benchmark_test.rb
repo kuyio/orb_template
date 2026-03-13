@@ -9,25 +9,25 @@ class BenchmarkTest < Minitest::Test
   N = Integer(ENV.fetch('BENCH_N', 2000))
 
   # Maximum allowed milliseconds per compilation for each template category.
-  # These are generous ceilings, not targets — they exist to catch major
+  # These are generous ceilings, not targets -- they exist to catch major
   # regressions, not micro-optimisations.  Adjust as hardware changes.
   THRESHOLDS = {
-    minimal:          1.0,   # ms per compilation
-    static_heavy:     3.0,
+    minimal: 1.0, # ms per compilation
+    static_heavy: 2.0,
     expression_heavy: 10.0,
-    control_flow:     2.0,
-    attributes_mixed: 3.0,
-    component_like:   4.0,
-    deeply_nested:    4.0,
-    realistic_page:   8.0,
+    control_flow: 2.0,
+    attributes_mixed: 2.0,
+    component_like: 3.0,
+    deeply_nested: 3.0,
+    realistic_page: 5.0,
   }.freeze
 
   # -------------------------------------------------------------------
-  # Templates — each stresses a different part of the pipeline
+  # Templates -- each stresses a different part of the pipeline
   # -------------------------------------------------------------------
 
   TEMPLATES = {
-    # 1. Minimal: near-empty template — measures baseline overhead
+    # 1. Minimal: near-empty template -- measures baseline overhead
     minimal: '<div>hello</div>',
 
     # 2. Static-heavy: lots of plain HTML, very few expressions
@@ -47,9 +47,9 @@ class BenchmarkTest < Minitest::Test
     ORB
 
     # 3. Expression-heavy: many dynamic attribute expressions
-    expression_heavy: (1..30).map { |i|
+    expression_heavy: (1..30).map do |i|
       %(<div id={x#{i}} class={y#{i}} data-v={z#{i}}>{{ v#{i} }}</div>)
-    }.join("\n"),
+    end.join("\n"),
 
     # 4. Control flow: if/for blocks
     control_flow: <<~ORB,
@@ -106,9 +106,9 @@ class BenchmarkTest < Minitest::Test
     ORB
 
     # 7. Deeply nested: tests recursive compilation depth
-    deeply_nested: 10.times.inject('<span>{{ @leaf }}</span>') { |inner, i|
+    deeply_nested: 10.times.inject('<span>{{ @leaf }}</span>') do |inner, i|
       %(<div class="level-#{i}" id={@id_#{i}} data-depth={#{i}}>#{inner}</div>)
-    },
+    end,
 
     # 8. Realistic page: a full-page-ish template combining everything
     realistic_page: <<~ORB,
@@ -170,7 +170,7 @@ class BenchmarkTest < Minitest::Test
   }.freeze
 
   # -------------------------------------------------------------------
-  # Full-pipeline benchmarks — one test per template
+  # Full-pipeline benchmarks -- one test per template
   # -------------------------------------------------------------------
 
   TEMPLATES.each do |name, template|
@@ -189,7 +189,7 @@ class BenchmarkTest < Minitest::Test
   end
 
   # -------------------------------------------------------------------
-  # Stage-level breakdown — profiles tokenizer, parser, compiler, filters
+  # Stage-level breakdown -- profiles tokenizer, parser, compiler, filters
   # -------------------------------------------------------------------
 
   def test_benchmark_stage_breakdown
@@ -219,11 +219,11 @@ class BenchmarkTest < Minitest::Test
     full_time = measure { N.times { compile(template) } }
     puts format("    %-30s %8.3f ms/iter", "full pipeline", (full_time / N) * 1000)
 
-    pass # always pass — this test is for visibility, not gating
+    pass # always pass -- this test is for visibility, not gating
   end
 
   # -------------------------------------------------------------------
-  # Temple IR node count — tracks AST bloat over time
+  # Temple IR node count -- tracks AST bloat over time
   # -------------------------------------------------------------------
 
   def test_benchmark_node_counts
@@ -258,6 +258,7 @@ class BenchmarkTest < Minitest::Test
 
   def count_nodes(ir)
     return 0 unless ir.is_a?(Array)
+
     1 + ir.sum { |child| count_nodes(child) }
   end
 end
