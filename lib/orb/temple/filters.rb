@@ -16,6 +16,11 @@ module ORB
       # Used to validate slot names before interpolation into generated Ruby code.
       VALID_SLOT_NAME = /\A[a-z_]\w*\z/
 
+      # Valid :for expression: single identifier or tuple-destructured identifiers
+      # (e.g., "item in items", "key, value in hash", "(key, value) in hash")
+      # followed by " in " and the collection expression.
+      VALID_FOR_EXPRESSION = /\A\s*(\(?[a-z_]\w*(?:\s*,\s*[a-z_]\w*)*\)?)\s+in\s+(.+)\z/m
+
       def initialize(options = {})
         @options = options
         @attributes_compiler = AttributesCompiler.new
@@ -51,7 +56,7 @@ module ORB
 
         block_name = "__orb__#{komponent_name.rpartition('::').last.underscore}"
         block_name = node.directives.fetch(:with, block_name)
-        unless block_name.match?(/\A[a-z_]\w*\z/)
+        unless block_name.match?(VALID_SLOT_NAME)
           raise ORB::SyntaxError.new("Invalid :with directive value: must be a valid Ruby identifier", 0)
         end
 
@@ -100,7 +105,7 @@ module ORB
         end
         parent_name = "__orb__#{node.component.underscore}"
         block_name = node.directives.fetch(:with, "__orb__#{slot_name}")
-        unless block_name.match?(/\A[a-z_]\w*\z/)
+        unless block_name.match?(VALID_SLOT_NAME)
           raise ORB::SyntaxError.new("Invalid :with directive value: must be a valid Ruby identifier", 0)
         end
 
@@ -132,7 +137,8 @@ module ORB
       # @param [Array] content The content to be rendered for each iteration
       # @return [Array] compiled Temple expression
       def on_orb_for(expression, content)
-        match = expression.match(/\A\s*([a-z_]\w*)\s+in\s+(.+)\z/m)
+        # Match single identifier or tuple-destructured identifiers (e.g., "key, value" or "(key, value)")
+        match = expression.match(VALID_FOR_EXPRESSION)
         raise ORB::SyntaxError.new("Invalid :for expression: enumerator must be a valid Ruby identifier", 0) unless match
 
         enumerator, collection = match[1], match[2]

@@ -665,6 +665,33 @@ class SecurityTest < Minitest::Test
       "Expected normal :for directive to compile to a standard .each iterator"
   end
 
+  def test_for_block_tuple_destructuring_compiles_correctly
+    template = '{#for name, spec in @tokens}{{name}}{/for}'
+
+    generated_code = compile(template)
+
+    assert_includes generated_code, "@tokens.each do |name, spec|",
+      "Expected tuple-destructured :for to compile to a standard .each iterator"
+  end
+
+  def test_for_block_parenthesized_tuple_destructuring_compiles_correctly
+    template = '{#for (key, value) in hash}{{key}}{/for}'
+
+    generated_code = compile(template)
+
+    assert_includes generated_code, "hash.each do |(key, value)|",
+      "Expected parenthesized tuple-destructured :for to compile to a standard .each iterator"
+  end
+
+  def test_for_directive_tuple_destructuring_compiles_correctly
+    template = '<li :for="name, spec in @tokens">text</li>'
+
+    generated_code = compile(template)
+
+    assert_includes generated_code, "@tokens.each do |name, spec|",
+      "Expected tuple-destructured :for directive to compile to a standard .each iterator"
+  end
+
   private
 
   # Recursively extract all [:code, "..."] nodes from a Temple expression tree
