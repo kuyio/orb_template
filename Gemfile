@@ -19,6 +19,7 @@ group :development, :test do
   gem "sprockets-rails"
   gem "turbo-rails", "~> 1.5"
   gem "importmap-rails", "~> 2.0"
+  gem 'benchmark'
   gem 'minitest'
   gem 'minitest-rails'
   gem 'view_component'
