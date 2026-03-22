@@ -1,5 +1,15 @@
 ## [Unreleased]
 
+## [0.2.3] - 2026-03-22
+
+### Fixed
+
+- Eliminated void-context warnings caused by Temple's `AttributeRemover` captures — added `CaptureBuffer` generator that returns `nil` from `return_buffer` instead of emitting a bare variable name
+
+### Changed
+
+- Benchmark tests are now excluded from the default `rake test` task and run separately via `rake benchmark`
+
 ## [0.2.2] - 2026-03-13
 
 ### Fixed

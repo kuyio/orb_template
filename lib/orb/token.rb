@@ -20,7 +20,7 @@ module ORB
       meta.has_key?(method.to_sym)
     end
 
-    def method_missing(method, *args, &block)
+    def method_missing(method, *args, &)
       if meta.has_key?(method.to_sym)
         meta[method.to_sym]
       else

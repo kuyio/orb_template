@@ -1,13 +1,17 @@
 # Makefile for ORB Ruby Gem
 
-.PHONY: all test build clean install lint spec help
+.PHONY: all test build clean install lint spec benchmark help
 
 # Default target
 all: test build
 
-# Run test suite
+# Run test suite (excludes benchmarks)
 spec:
 	bundle exec rake test
+
+# Run benchmark suite
+benchmark:
+	bundle exec rake benchmark
 
 # Build the gem
 build:
@@ -29,8 +33,8 @@ install: build
 lint:
 	bundle exec rubocop
 
-# Run both specs and linting
-test: spec lint
+# Run specs, linting, and benchmarks
+test: spec lint benchmark
 
 # Show help
 help:
@@ -40,6 +44,7 @@ help:
 	@echo "  build   - Build the gem package"
 	@echo "  install - Build and install the gem locally"
 	@echo "  clean   - Remove built gem files"
-	@echo "  spec    - Run the test suite"
-	@echo "  lint    - Run RuboCop linting"
-	@echo "  help    - Show this help message"
+	@echo "  spec      - Run the test suite (excludes benchmarks)"
+	@echo "  benchmark - Run the benchmark suite"
+	@echo "  lint      - Run RuboCop linting"
+	@echo "  help      - Show this help message"
