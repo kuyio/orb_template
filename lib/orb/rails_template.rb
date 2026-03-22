@@ -1,21 +1,32 @@
 # frozen_string_literal: true
 
 module ORB
+  # Generator that fixes void-context warnings from Temple's AttributeRemover.
+  #
+  # AttributeRemover wraps dynamic attributes (e.g. class={expr}) in a
+  # [:capture, tmp, ...] + [:if, "!tmp.empty?", ...] pair. The default
+  # RailsOutputBuffer uses itself as the capture generator, and its
+  # return_buffer (inherited from StringBuffer) emits the bare variable
+  # name as the last expression. Inside the surrounding :multi this
+  # becomes a statement in void context since Ruby -w warns about it.
+  #
+  # This subclass returns nil from return_buffer when acting as a capture
+  # generator (buffer != @output_buffer), suppressing the bare variable.
+  class OutputBuffer < ::Temple::Generators::RailsOutputBuffer
+    define_options capture_generator: ORB::OutputBuffer
+
+    def return_buffer
+      buffer == '@output_buffer' ? super : nil
+    end
+  end
+
   class RailsTemplate
     require 'orb/utils/orb'
-
-    class CaptureBuffer < ::Temple::Generators::RailsOutputBuffer
-      def return_buffer
-        nil
-      end
-    end
-
     # Compatible with: https://github.com/judofyr/temple/blob/v0.7.7/lib/temple/mixins/options.rb#L15-L24
     class << self
       def options
         @options ||= {
-          generator: ::Temple::Generators::RailsOutputBuffer,
-          capture_generator: CaptureBuffer,
+          generator: ORB::OutputBuffer,
           use_html_safe: true,
           streaming: true,
           buffer_class: 'ActionView::OutputBuffer',

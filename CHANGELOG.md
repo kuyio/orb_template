@@ -1,5 +1,11 @@
 ## [Unreleased]
 
+## [0.2.4] - 2026-03-22
+
+### Fixed
+
+- Fixed `ORB::Temple::Engine: Option :capture_generator is invalid` — replaced separate `CaptureBuffer` class with `ORB::OutputBuffer` that uses `define_options` to register `capture_generator` as a valid option and conditionally returns `nil` from `return_buffer` when acting as a capture generator
+
 ## [0.2.3] - 2026-03-22
 
 ### Fixed
