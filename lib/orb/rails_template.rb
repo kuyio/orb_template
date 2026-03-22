@@ -3,11 +3,19 @@
 module ORB
   class RailsTemplate
     require 'orb/utils/orb'
+
+    class CaptureBuffer < ::Temple::Generators::RailsOutputBuffer
+      def return_buffer
+        nil
+      end
+    end
+
     # Compatible with: https://github.com/judofyr/temple/blob/v0.7.7/lib/temple/mixins/options.rb#L15-L24
     class << self
       def options
         @options ||= {
           generator: ::Temple::Generators::RailsOutputBuffer,
+          capture_generator: CaptureBuffer,
           use_html_safe: true,
           streaming: true,
           buffer_class: 'ActionView::OutputBuffer',
