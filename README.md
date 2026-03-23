@@ -28,12 +28,12 @@ https://github.com/user-attachments/assets/8380b9a8-2063-40f3-a9b6-1b5d623d6f31
 
 **The ORB Way**
 
-```html
+```jsx
 <Card title="Your friends">
   <Card:Section title="Birthdays today">
     <List>
       <List.Item :for={friend in @friends}>
-        <Link url={friend_path(friend)}>{{friend.name}}</Link>
+        <Link url={member_path(friend)}>{{friend.name}}</Link>
       </List.Item>
     </List>
   </Card:Section>
@@ -118,15 +118,15 @@ But that's still not ideal. The code is still verbose, and the heavy use of Ruby
 
 The `ORB` template language takes another path and allows you to write components exactly how you picture them: as elements in a document tree.
 
-```html
+```jsx
 <Card title="Your friends">
   <Card:Section title="Birthdays today">
     <List>
       <List.Item>
-        <Link url={member_path(2)} Carl Schwartz (27) />
+        <Link url={member_path(2)}>Carl Schwartz (27)</Link>
       </List.Item>
       <List.Item>
-        <Link url={member_path(3)} Floralie Brain (38) />
+        <Link url={member_path(3)}>Floralie Brain (38)</Link>
       </List.Item>
     </List>
   </Card:Section>
@@ -171,7 +171,7 @@ This will instruct the `ORB` engine to look for components under the `MyComponen
 
 Regular HTML tags are fully supported by `ORB`. Just write your HTML tags as you are used to and you are good to go.
 
-```html
+```jsx
 <div id="page-banner" class="banner" aria-role="alert">
   <span class="message">Hello World!</span>
 </div>
@@ -181,7 +181,7 @@ Regular HTML tags are fully supported by `ORB`. Just write your HTML tags as you
 
 `ORB` supports Ruby expressions in the code through double curly-braces (mustache-like syntax). The code inside the curly-braces will be evaluated at render time, and the result will be HTML-safe escaped and inserted into the output.:
 
-```html
+```jsx
 <div id="page-banner" class="banner" aria-role="alert">
   <span class="message">{{banner.message}}</span>
 </div>
@@ -189,7 +189,7 @@ Regular HTML tags are fully supported by `ORB`. Just write your HTML tags as you
 
 Should you need to execute non-printing code, for instance to assign local variables, you can use the non-printing expression syntax with percent signs:
 
-```html
+```jsx
 {% user = current_user %}
 
 <div id="page-banner" class="banner" aria-role="alert">
@@ -203,7 +203,7 @@ The `ORB` language allows you to define dynamic attribute values for HTML tags t
 
 Example:
 
-```html
+```jsx
 <div id={dom_id(banner)} class={banner.classes}>
   <span class="message">{{banner.message}}</span>
 </div>
@@ -213,23 +213,23 @@ Example:
 
 `ORB` supports flow control constructs through block instructions. The general syntax for a block is:
 
-```html
+```jsx
 {#blockname expression} ... {/blockname}
 ```
 
 For example, a `Banner` may be conditionally rendered through an `{#if}` block construct like this:
 
-```html
+```jsx
 {#if banner.urgent?}
-<div id={dom_id(banner)} class={banner.classNames}>
-  <span class="message">{{banner.message}}</span>
-</div>
+  <div id={dom_id(banner)} class={banner.classNames}>
+    <span class="message">{{banner.message}}</span>
+  </div>
 {/if}
 ```
 
 Since control flow is such a common thing in templates, `ORB` provides special syntactic sugar for the `{#if}` and `{#for}` blocks through the `:if` and `:for` directives on HTML tags. The above example can thus be rewritten as:
 
-```html
+```jsx
 <div id={dom_id(banner)} class={banner.classNames} :if={banner.urgent?}>
   <span class="message">{{banner.message}}</span>
 </div>
@@ -239,16 +239,20 @@ Since control flow is such a common thing in templates, `ORB` provides special s
 
 `ORB` supports attribute splatting for both HTML tags and view components through the `**attributes` syntax. The attribute name for the splat must be a `Hash`; all key-value pairs will be added as attributes to the tag. For example:
 
-```html
-<div **banner_attributes>... content ...</div>
+```jsx
+<div **banner_attributes>
+  <!-- other content ... -->
+</div>
 ```
 
 ### Splatted Attribute Expressions
 
 You can also use an expression to define the splatted attributes through the `**{expression}` syntax. The expression must evaluate to a `Hash`, and all key-value pairs will be added as attributes to the tag. For example:
 
-```html
-<div **{dynamic_attributes}>... content ...</div>
+```jsx
+<div **{dynamic_attributes(member)}>
+  <!-- other content ... -->
+</div>
 ```
 
 ### View Components
@@ -272,19 +276,56 @@ class MyComponents::Button < ViewComponent::Base
 end
 ```
 
-you can render the component in an ORB template `show.html.orb` as:
+You can render this component in an ORB template `show.html.orb` as:
 
 ```jsx
 <Button url="/click_me">I am a button</Button>
 ```
 
-Tip: you can also define the markup for a component inline as an `orb_template <<-ORB ... ORB` block to use the `ORB` template language for the component's own view template.
+### Inline Templates
+
+You can define the markup for a component inline using `orb_template` to use the ORB template language for the component's own view template:
+
+```ruby
+class ButtonComponent < ViewComponent::Base
+  def initialize(url:)
+    @url = url
+  end
+
+  orb_template <<~ORB
+    <a href={@url} class="btn">{{ content }}</a>
+  ORB
+end
+```
+
+If your template needs string interpolation, you have several options:
+
+```ruby
+# 1. Single-quoted heredoc (recommended) — #{} is preserved for render time
+orb_template <<~'ORB'
+  <div id={"#{@id}_suffix"}>Hello</div>
+ORB
+
+# 2. String concatenation — avoids #{} entirely
+orb_template <<~ORB
+  <div id={@id + "_suffix"}>Hello</div>
+ORB
+
+# 3. Helper method — move the interpolation into Ruby
+orb_template <<~ORB
+  <div id={suffixed_id}>Hello</div>
+ORB
+
+def suffixed_id
+  "#{@id}_suffix"
+end
+```
 
 ### ViewComponent Slots
 
 `ORB` also provides a DSL for invoking a component slot and passing content to the slot through the `Component:Slot` syntax. For example, if you have a `Card` component that defines a `Sections` slot via `renders_many :sections, Card::Section`, you can invoke and fill the slot in an `ORB` template like this:
 
-```html
+```jsx
 <Card title="Products">
   <Card:Section title="Description">
     <p>Blue t-shirt in size L ...</p>
@@ -298,13 +339,13 @@ Tip: Slot names are case-insensitive, so `<Card:section> ... </Card:section>` al
 
 Sometimes, you may want to organize your components in sub-namespaces, or use components from other libraries. `ORB` supports this through dot notation in the tag names. For example, if you have a `MyComponents::Admin::Button` component, you can render it in an `ORB` template like this:
 
-```html
+```jsx
 <Admin.Button url="/admin/click_me">Admin Button</Admin.Button>
 ```
 
 If you have a third-party component `ThirdParty::UI::Modal`, you can render it like this:
 
-```html
+```jsx
 <ThirdParty.UI.Modal title="Terms and Conditions">
   <p>...</p>
 </ThirdParty.UI.Modal>
@@ -313,7 +354,7 @@ If you have a third-party component `ThirdParty::UI::Modal`, you can render it l
 To make life easier when using components from a specific namespace frequently, you can configure additional namespaces in the `ORB` configuration:
 
 ```ruby
-ORB.namespaces = ['MyComponents ThirdParty::UI']
+ORB.namespaces = ['MyComponents', 'ThirdParty::UI']
 ```
 
 Namespaces defined in this way will be searched in order of definition when resolving component tag names in templates.
