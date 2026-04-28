@@ -1,6 +1,6 @@
 # Makefile for ORB Ruby Gem
 
-.PHONY: all test build clean install lint spec benchmark help
+.PHONY: all test build clean install lint spec benchmark security help
 
 # Default target
 all: test build
@@ -33,8 +33,14 @@ install: build
 lint:
 	bundle exec rubocop
 
-# Run specs, linting, and benchmarks
-test: spec lint benchmark
+# Security scanning (dependency audit, static analysis, filesystem scan)
+security:
+	bundle exec bundle-audit check --update
+	bundle exec brakeman --no-pager -q -p test/dummy
+	trivy fs --scanners vuln,secret,misconfig .
+
+# Run specs, linting, security, and benchmarks
+test: spec lint security benchmark
 
 # Show help
 help:
@@ -47,4 +53,5 @@ help:
 	@echo "  spec      - Run the test suite (excludes benchmarks)"
 	@echo "  benchmark - Run the benchmark suite"
 	@echo "  lint      - Run RuboCop linting"
+	@echo "  security  - Run security scans (bundler-audit, brakeman, trivy)"
 	@echo "  help      - Show this help message"

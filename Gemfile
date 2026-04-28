@@ -13,7 +13,9 @@ group :development do
 end
 
 group :development, :test do
-  gem 'rails'
+  gem 'railties'
+  gem 'actionpack'
+  gem 'activemodel'
   gem "puma"
   gem 'listen'
   gem "sprockets-rails"
@@ -26,4 +28,6 @@ group :development, :test do
   gem 'slim-rails'
   gem 'haml-rails'
   gem 'kuyio-rubocop', github: 'kuyio/kuyio-rubocop'
+  gem 'bundler-audit', require: false
+  gem 'brakeman', require: false
 end

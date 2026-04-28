@@ -12,6 +12,8 @@
 
 - Refactored `compiler_directives?` to use a `COMPILER_DIRECTIVES` constant set instead of chained `||` conditions, making it trivial to add future directives (`lib/orb/ast/tag_node.rb`)
 - Refactored `transform_directives_for_tag_node` into `handle_if`, `handle_unwrap`, and `handle_for` helper methods, keeping the entry point as a single-line priority chain (`lib/orb/temple/compiler.rb`)
+- Replaced `rails` gem with `railties`, `actionpack`, and `activemodel` in the test dummy app, removing unused frameworks (ActionCable, ActionText, ActiveStorage, ActionMailbox, ActionMailer, ActiveRecord) and reducing the dependency surface from 116 to 98 gems
+- Added `make security` target running bundler-audit, brakeman, and trivy; integrated into the `make test` pipeline
 
 ## [0.2.4] - 2026-03-22
 
