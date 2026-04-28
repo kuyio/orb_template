@@ -36,13 +36,63 @@ class UnwrapDirectiveTest < Minitest::Test
     temple = compile_to_temple(input)
 
     child = temple[1]
-    assert_equal child[0], :if
-    assert_equal child[1], "@visible"
+    assert_equal :if, child[0]
+    assert_equal "@visible", child[1]
 
     unwrap_node = child[2]
-    assert_equal unwrap_node[0], :orb
-    assert_equal unwrap_node[1], :unwrap
-    assert_equal unwrap_node[2], "@plain"
+    assert_equal :orb, unwrap_node[0]
+    assert_equal :unwrap, unwrap_node[1]
+    assert_equal "@plain", unwrap_node[2]
+  end
+
+  def test_compile_for_wraps_outside_if
+    input = '<li :if={visible?(item)} :for="item in @items">{{item}}</li>'
+
+    temple = compile_to_temple(input)
+
+    child = temple[1]
+    assert_equal :orb, child[0]
+    assert_equal :for, child[1]
+    assert_equal "item in @items", child[2]
+
+    if_node = child[3]
+    assert_equal :if, if_node[0]
+    assert_equal "visible?(item)", if_node[1]
+  end
+
+  def test_compile_for_wraps_outside_unwrap
+    input = '<li :unwrap={@flat} :for="item in @items">{{item}}</li>'
+
+    temple = compile_to_temple(input)
+
+    child = temple[1]
+    assert_equal :orb, child[0]
+    assert_equal :for, child[1]
+    assert_equal "item in @items", child[2]
+
+    unwrap_node = child[3]
+    assert_equal :orb, unwrap_node[0]
+    assert_equal :unwrap, unwrap_node[1]
+    assert_equal "@flat", unwrap_node[2]
+  end
+
+  def test_compile_for_wraps_outside_if_wraps_outside_unwrap
+    input = '<li :unwrap={@flat} :if={visible?(item)} :for="item in @items">{{item}}</li>'
+
+    temple = compile_to_temple(input)
+
+    child = temple[1]
+    assert_equal :orb, child[0]
+    assert_equal :for, child[1]
+
+    if_node = child[3]
+    assert_equal :if, if_node[0]
+    assert_equal "visible?(item)", if_node[1]
+
+    unwrap_node = if_node[2]
+    assert_equal :orb, unwrap_node[0]
+    assert_equal :unwrap, unwrap_node[1]
+    assert_equal "@flat", unwrap_node[2]
   end
 
   def test_compile_unwrap_carries_both_element_and_children
@@ -53,7 +103,8 @@ class UnwrapDirectiveTest < Minitest::Test
     unwrap_node = temple[1]
     assert_equal unwrap_node[0], :orb
     assert_equal unwrap_node[1], :unwrap
-    assert_equal unwrap_node.length, 5, "Unwrap expression should have 5 elements: [:orb, :unwrap, condition, element, children]"
+    assert_equal unwrap_node.length, 5,
+      "Unwrap expression should have 5 elements: [:orb, :unwrap, condition, element, children]"
   end
 
   # ---------------------------------------------------------------------------
@@ -123,6 +174,39 @@ class UnwrapDirectiveTest < Minitest::Test
     assert result.success?, "Generated code has syntax errors: #{result.errors.map(&:message).join(', ')}"
     assert_includes code, "@show"
     assert_includes code, "@plain"
+  end
+
+  def test_for_and_if_combined_generates_valid_code
+    template = '<li :if={visible?(item)} :for="item in @items">{{item}}</li>'
+    code = compile(template)
+
+    result = Prism.parse(code)
+    assert result.success?, "Generated code has syntax errors: #{result.errors.map(&:message).join(', ')}"
+    assert code.index("@items.each") < code.index("visible?(item)"),
+      ":for loop should appear before :if condition in generated code"
+  end
+
+  def test_for_and_unwrap_combined_generates_valid_code
+    template = '<li :unwrap={@flat} :for="item in @items">{{item}}</li>'
+    code = compile(template)
+
+    result = Prism.parse(code)
+    assert result.success?, "Generated code has syntax errors: #{result.errors.map(&:message).join(', ')}"
+    assert code.index("@items.each") < code.index("@flat"),
+      ":for loop should appear before :unwrap condition in generated code"
+  end
+
+  def test_all_three_directives_combined_generates_valid_code
+    template = '<li :unwrap={@flat} :if={visible?(item)} :for="item in @items">{{item}}</li>'
+    code = compile(template)
+
+    result = Prism.parse(code)
+    assert result.success?, "Generated code has syntax errors: #{result.errors.map(&:message).join(', ')}"
+    for_pos = code.index("@items.each")
+    if_pos = code.index("visible?(item)")
+    unwrap_pos = code.index("@flat")
+    assert for_pos < if_pos, ":for should appear before :if"
+    assert if_pos < unwrap_pos, ":if should appear before :unwrap"
   end
 
   def test_unwrap_does_not_break_for_directive
@@ -229,8 +313,8 @@ class UnwrapDirectiveTest < Minitest::Test
     true_branch = unwrap_if[2]
     false_branch = unwrap_if[3]
 
-    true_statics = extract_static_nodes(true_branch).map { |n| n[1] }
-    false_statics = extract_static_nodes(false_branch).map { |n| n[1] }
+    true_statics = extract_static_nodes(true_branch).pluck(1)
+    false_statics = extract_static_nodes(false_branch).pluck(1)
 
     refute true_statics.any? { |s| s.include?("wrap") },
       "True branch (unwrapped) should not contain the wrapper element"

@@ -155,7 +155,7 @@ module ORB
 
       # Compile a tag node with directives
       def transform_directives_for_tag_node(node)
-        handle_if(node) || handle_unwrap(node) || handle_for(node) || transform(node)
+        handle_for(node) || handle_if(node) || handle_unwrap(node) || transform(node)
       end
 
       def handle_if(node)

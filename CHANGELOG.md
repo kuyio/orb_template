@@ -2,7 +2,11 @@
 
 ### Added
 
-- `:unwrap` directive — conditionally strips a wrapper element while keeping its children. When the condition is true, only the children are rendered; when false, the element renders normally. Works on both HTML elements and components, and composes with `:if` (evaluated first) and `:for`. (`lib/orb/temple/compiler.rb`, `lib/orb/temple/filters.rb`, `lib/orb/ast/tag_node.rb`)
+- `:unwrap` directive — conditionally strips a wrapper element while keeping its children. When the condition is true, only the children are rendered; when false, the element renders normally. Works on both HTML elements and components, and composes with `:if` and `:for`. (`lib/orb/temple/compiler.rb`, `lib/orb/temple/filters.rb`, `lib/orb/ast/tag_node.rb`)
+
+### Fixed
+
+- Fixed directive priority order: `:for` is now always outermost, followed by `:if`, then `:unwrap`. Previously, `:if` and `:unwrap` wrapped outside `:for`, which caused `NameError` at runtime when `:if` or `:unwrap` conditions referenced the loop variable (e.g., `<li :if={visible?(item)} :for="item in @items">`). (`lib/orb/temple/compiler.rb`)
 
 ### Changed
 

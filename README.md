@@ -267,7 +267,49 @@ This eliminates the need to duplicate child markup when a wrapper is conditional
 </Tooltip>
 ```
 
-`:unwrap` works on both HTML elements and components. It can be combined with `:if` on the same element -- `:if` is evaluated first:
+`:unwrap` works on both HTML elements and components.
+
+#### Combining Directives
+
+Multiple directives can be combined on the same element. When they are, they are evaluated in a fixed priority order, regardless of the order they appear in the template:
+
+> **`:for`** (outermost) > **`:if`** > **`:unwrap`** (innermost)
+
+This ordering ensures that loop variables introduced by `:for` are always in scope for `:if` and `:unwrap` conditions.
+
+**`:for` + `:if`** — filter items inside a loop:
+
+```jsx
+<li :for="item in @items" :if={item.visible?}>{{item.name}}</li>
+```
+
+The `:for` loop runs first, then `:if` is evaluated per iteration with `item` in scope:
+
+```ruby
+@items.each do |item|
+  if item.visible?
+    _buf << "<li>" << escape_html(item.name) << "</li>"
+  end
+end
+```
+
+**`:for` + `:unwrap`** — conditionally strip wrappers per item:
+
+```jsx
+<li :for="item in @items" :unwrap={item.inline?}>{{item.name}}</li>
+```
+
+```ruby
+@items.each do |item|
+  if item.inline?
+    _buf << escape_html(item.name)
+  else
+    _buf << "<li>" << escape_html(item.name) << "</li>"
+  end
+end
+```
+
+**`:if` + `:unwrap`** — conditionally render, conditionally wrap:
 
 ```jsx
 <Tooltip description="..." :if={@show_section} :unwrap={!@needs_tooltip}>
@@ -280,6 +322,14 @@ This eliminates the need to duplicate child markup when a wrapper is conditional
 | `false` | (any) | Nothing |
 | `true` | `true` | `<Tooltip>` wrapping `<Badge>` |
 | `true` | `false` | `<Badge>` alone |
+
+**All three** — loop, filter, and conditionally wrap:
+
+```jsx
+<li :for="item in @items" :if={item.visible?} :unwrap={item.inline?}>
+  {{item.name}}
+</li>
+```
 
 ### Splatted Attributes
 
