@@ -1,5 +1,14 @@
 ## [Unreleased]
 
+### Added
+
+- `:unwrap` directive — conditionally strips a wrapper element while keeping its children. When the condition is true, only the children are rendered; when false, the element renders normally. Works on both HTML elements and components, and composes with `:if` (evaluated first) and `:for`. (`lib/orb/temple/compiler.rb`, `lib/orb/temple/filters.rb`, `lib/orb/ast/tag_node.rb`)
+
+### Changed
+
+- Refactored `compiler_directives?` to use a `COMPILER_DIRECTIVES` constant set instead of chained `||` conditions, making it trivial to add future directives (`lib/orb/ast/tag_node.rb`)
+- Refactored `transform_directives_for_tag_node` into `handle_if`, `handle_unwrap`, and `handle_for` helper methods, keeping the entry point as a single-line priority chain (`lib/orb/temple/compiler.rb`)
+
 ## [0.2.4] - 2026-03-22
 
 ### Fixed

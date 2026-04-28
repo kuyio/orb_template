@@ -127,6 +127,19 @@ module ORB
         result
       end
 
+      # Handle an unwrap directive expression `[:orb, :unwrap, condition, element, children]`
+      #
+      # When condition is true, renders only the children (unwrapped).
+      # When condition is false, renders the full element with children inside.
+      #
+      # @param [String] condition The condition to be evaluated
+      # @param [Array] element The full element Temple expression
+      # @param [Array] children The children-only Temple expression
+      # @return [Array] compiled Temple expression
+      def on_orb_unwrap(condition, element, children)
+        [:if, condition, compile(children), compile(element)]
+      end
+
       # Handle a for block expression `[:orb, :for, expression, content]`
       #
       # @param [String] expression The iterator expression to be evaluated

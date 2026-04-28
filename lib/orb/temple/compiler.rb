@@ -155,24 +155,31 @@ module ORB
 
       # Compile a tag node with directives
       def transform_directives_for_tag_node(node)
-        # First, process any :if directives
-        if_directive = node.directives.fetch(:if, false)
-        if if_directive
-          node.remove_directive(:if)
-          return [:if,
-            if_directive,
-            transform(node)]
-        end
+        handle_if(node) || handle_unwrap(node) || handle_for(node) || transform(node)
+      end
 
-        # Second, process any :for directives
-        for_directive = node.directives.fetch(:for, false)
-        if for_directive
-          node.remove_directive(:for)
-          return [:orb, :for, for_directive, transform(node)]
-        end
+      def handle_if(node)
+        directive = node.directives.fetch(:if, false)
+        return unless directive
 
-        # Last, render as a dynamic node expression
-        transform(node)
+        node.remove_directive(:if)
+        [:if, directive, transform(node)]
+      end
+
+      def handle_unwrap(node)
+        directive = node.directives.fetch(:unwrap, false)
+        return unless directive
+
+        node.remove_directive(:unwrap)
+        [:orb, :unwrap, directive, transform(node), transform_children(node)]
+      end
+
+      def handle_for(node)
+        directive = node.directives.fetch(:for, false)
+        return unless directive
+
+        node.remove_directive(:for)
+        [:orb, :for, directive, transform(node)]
       end
 
       # Compile a dynamic tag node

@@ -235,6 +235,52 @@ Since control flow is such a common thing in templates, `ORB` provides special s
 </div>
 ```
 
+#### The `:unwrap` Directive
+
+The `:unwrap` directive conditionally strips a wrapper element while keeping its children. When the condition is true, only the children are rendered. When false, the element renders normally with its children inside.
+
+```jsx
+<div class="tooltip-wrapper" :unwrap={!@needs_tooltip}>
+  <span>Always rendered</span>
+</div>
+```
+
+| `:unwrap` condition | Result |
+|---|---|
+| `true` | Children only (`<span>Always rendered</span>`) |
+| `false` | Full element (`<div class="tooltip-wrapper"><span>...</span></div>`) |
+
+This eliminates the need to duplicate child markup when a wrapper is conditional:
+
+```jsx
+{!-- Before: duplicated children --}
+<Tooltip :if={@is_last_method} description="Only active method.">
+  <Toggle><Toggle:Option label="On" /><Toggle:Option label="Off" /></Toggle>
+</Tooltip>
+{#if !@is_last_method}
+  <Toggle><Toggle:Option label="On" /><Toggle:Option label="Off" /></Toggle>
+{/if}
+
+{!-- After: single child block, zero duplication --}
+<Tooltip description="Only active method." :unwrap={!@is_last_method}>
+  <Toggle><Toggle:Option label="On" /><Toggle:Option label="Off" /></Toggle>
+</Tooltip>
+```
+
+`:unwrap` works on both HTML elements and components. It can be combined with `:if` on the same element -- `:if` is evaluated first:
+
+```jsx
+<Tooltip description="..." :if={@show_section} :unwrap={!@needs_tooltip}>
+  <Badge label="Status" />
+</Tooltip>
+```
+
+| `@show_section` | `@needs_tooltip` | Result |
+|---|---|---|
+| `false` | (any) | Nothing |
+| `true` | `true` | `<Tooltip>` wrapping `<Badge>` |
+| `true` | `false` | `<Badge>` alone |
+
 ### Splatted Attributes
 
 `ORB` supports attribute splatting for both HTML tags and view components through the `**attributes` syntax. The attribute name for the splat must be a `Hash`; all key-value pairs will be added as attributes to the tag. For example:
@@ -428,6 +474,7 @@ To enable `Tailwindcss` support for ORB, add this to your `settings.json`:
   - [x] `**{expression}` splats for html tags, components and slots
   - [x] `:if` directive
   - [x] `:for` directive
+  - [x] `:unwrap` directive
   - [x] verbatim tags
   - [x] ensure output safety and proper escaping of output
   - [x] security review and hardening of compilation pipeline

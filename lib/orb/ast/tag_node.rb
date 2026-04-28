@@ -192,8 +192,10 @@ module ORB
         directives.any?
       end
 
+      COMPILER_DIRECTIVES = %i[if unwrap for].freeze
+
       def compiler_directives?
-        directives.any? { |k, _v| k == :if || k == :for }
+        directives.any? { |k, _v| COMPILER_DIRECTIVES.include?(k) }
       end
 
       ##
