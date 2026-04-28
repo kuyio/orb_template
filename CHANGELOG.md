@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+## [0.2.5] - 2026-04-28
+
 ### Added
 
 - `:unwrap` directive — conditionally strips a wrapper element while keeping its children. When the condition is true, only the children are rendered; when false, the element renders normally. Works on both HTML elements and components, and composes with `:if` and `:for`. (`lib/orb/temple/compiler.rb`, `lib/orb/temple/filters.rb`, `lib/orb/ast/tag_node.rb`)
